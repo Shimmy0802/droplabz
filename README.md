@@ -1,259 +1,215 @@
 # DropLabz
 
-A Solana-native, multi-tenant community operations platform.
+**Professional infrastructure for managing Solana NFT communities.**
 
-> **📚 [View the complete Documentation Index →](./DOCUMENTATION_INDEX.md)**
+DropLabz is a community operations platform that gives you complete control over your whitelists, collaborations, pre-sales, and member access—all verified through Discord and Solana wallets.
 
-## 🏗️ Architecture
+---
 
-```text
-droplabz/
-├── apps/
-│   ├── web/          # Next.js admin + public pages
-│   └── bot/          # Discord bot service
-├── programs/
-│   └── verification/ # Solana/Anchor smart contracts
-├── packages/
-│   └── sdk/          # Shared TypeScript utilities
-└── pnpm-workspace.yaml
-```
+## What is DropLabz?
 
-## 📦 Tech Stack
+DropLabz is **not a marketplace**. It's a **toolkit for community managers** who need professional, secure infrastructure to:
 
-- **Frontend/Backend**: Next.js 14, TypeScript, Tailwind CSS
-- **Database**: PostgreSQL + Prisma ORM
-- **Auth**: NextAuth (Discord OAuth)
-- **Discord**: discord.js
-- **Solana**: Rust + Anchor Framework
-- **Package Manager**: pnpm (workspaces)
+- **Create verified whitelists** with custom Discord role and Solana wallet requirements
+- **Manage pre-sales** with tiered allocations and on-chain eligibility tracking
+- **Coordinate collaborations** between projects and communities
+- **Control community access** with role-based permissions and member management
+- **Automate operations** with scheduled winner draws and Discord integration
 
-## 🚀 Getting Started
+Everything is verified—Discord roles, Solana wallets, on-chain holdings—and you maintain complete control over your data and community.
 
-### Prerequisites
+---
 
-- Node.js 18+
-- pnpm 9.0+
-- PostgreSQL (local or Docker)
-- Solana CLI (for program development)
+## Key Features
 
-### Installation
+### 🛡️ Verified Whitelists
 
-```bash
-# Install dependencies
-pnpm install
+Create whitelists with custom requirements:
 
-# Copy environment file
-cp .env.example .env
+- Discord role requirements (admins must have X role)
+- Solana wallet ownership verification
+- NFT or token holding requirements
+- Duplicate entry detection
 
-# Update .env with your values (Discord, Solana, Database URLs)
-```
+Export verified wallet addresses ready for your launch.
 
-### Development
+### 📋 Pre-Sales
 
-Start all services in watch mode:
+Run verified pre-sales with confidence:
 
-```bash
-pnpm dev
-```
+- Multiple tiers with custom allocations
+- Custom requirements per tier
+- Automatic allocation assignment based on wallet eligibility
+- Export lists for on-chain claim programs
 
-Or run individual services:
+### 🤝 Collaborations
 
-```bash
-# Web app (http://localhost:3000)
-cd apps/web && pnpm dev
+Coordinate with partner projects:
 
-# Bot (requires DISCORD_BOT_TOKEN)
-cd apps/bot && pnpm dev
+- Share verified participant lists
+- Set mutual access requirements
+- Track participation across communities
+- Manage shared whitelists
 
-# Solana tests
-cd programs/verification && anchor test
-```
+### 👥 Community Management
 
-### Database
+Control your community like a pro:
 
-```bash
-# Push schema to database
-pnpm db:push
+- Assign member roles (Owner, Admin, Moderator, Member)
+- Manage whitelists and pre-sales
+- View community analytics and participation
+- Connect Discord server for integrated management
 
-# Open Prisma Studio
-pnpm db:studio
+### 🤖 Discord Integration
 
-# Create and run migrations
-pnpm db:migrate
-```
+Your bot works with you:
 
-## 📁 Project Structure
+- Post event announcements directly to Discord
+- Slash commands for setup and management
+- Auto-assign Discord roles to winners (optional)
+- Real-time verification integration
 
-### `/apps/web` — Next.js Web Application
+---
 
-- **Admin Dashboard**: Community management, event creation, winner selection
-- **Public Pages**: Event listings, entry submission, wallet verification
-- **API Routes**: REST endpoints for events, entries, verification
+## How It Works
 
-Key files:
+### 1. Create Your Community
 
-- `prisma/schema.prisma` — Database schema
-- `src/app/api/` — Route handlers
-- `src/lib/solana/` — Solana verification logic
+Sign up with Discord OAuth or email/password, then link your Discord server. You'll get an admin dashboard where you control everything.
 
-### `/apps/bot` — Discord Bot
+### 2. Set Up Requirements
 
-- Slash commands: `/droplabz setup`, `/droplabz post`, `/droplabz close`
-- Event posting as Discord embeds
-- Verification triggers
+Define what you're looking for:
 
-Key files:
+- Which Discord roles participants need
+- What Solana wallets they must own
+- Token or NFT holdings required
+- Max participants allowed
 
-- `src/commands/` — Command handlers
-- `src/lib/api-client.ts` — HTTP client to web API
+### 3. Launch Your Event
 
-### `/programs/verification` — Solana Smart Contract
+Post your whitelist, pre-sale, or collaboration to your community. Participants connect their Solana wallet and submit entries.
 
-- Event initialization and state management (PDAs)
-- Wallet registration and verification
-- Entry validation (on-chain access control)
+### 4. Verify Automatically
 
-Key files:
+DropLabz verifies entries in real-time:
 
-- `src/lib.rs` — Main program logic
-- `tests/verification.ts` — Anchor TypeScript tests
+- Checks Discord membership and roles
+- Verifies Solana wallet ownership
+- Validates on-chain holdings
+- Flags potential duplicates
 
-### `/packages/sdk` — Shared Utilities
+### 5. Pick Winners & Export
 
-Exported types and schemas used across web, bot, and frontend:
+Manually select winners or let DropLabz auto-draw. Export verified wallet addresses in seconds—ready for your smart contract or airdrop tool.
 
-- `types.ts` — Core data models (Event, Entry, Community, etc.)
-- `validation.ts` — Zod schemas for API inputs
-- `solana.ts` — Solana address validation
+---
 
-## 🔒 Security
+## Getting Started
 
-- **Multi-tenant isolation**: All data scoped by `communityId`
-- **One entry per wallet per event**: Enforced at API and optionally on-chain
-- **Server-side verification**: Required before accepting entries
-- **On-chain authority**: Solana smart contracts are the source of truth
-- **Audit logging**: All admin actions logged via `AuditLog` table
+### As a Community Admin
 
-## 🌐 Multi-Tenant Design
+1. Visit DropLabz and sign up (Discord OAuth recommended)
+2. Create your community and connect your Discord server
+3. Create your first whitelist, pre-sale, or collaboration
+4. Set your custom requirements
+5. Share the link with your community
+6. Verify entries and pick winners
+7. Export wallet addresses for your launch
 
-- **Communities** map 1:1 to Discord guilds
-- Admin permissions validated via Discord OAuth + guild roles
-- All database queries filtered by `communityId`
-- Each community can map to different Solana programs/PDAs
+### For Your Community Members
 
-## 📊 Data Model
+1. Visit your community's event page
+2. Connect your Solana wallet
+3. Submit your entry (Discord verification is automatic)
+4. Wait for verification (instant for most users)
+5. If selected as a winner, you'll be notified
 
-**Community**: Represents a Discord guild
+---
 
-- `guildId`, `name`, `ownerUserId`, `solanaConfig`
+## Subscription Tiers
 
-**Event**: Represents a giveaway, whitelist, or access event
+**Free**
 
-- `type` (GIVEAWAY | WHITELIST | ACCESS | AIRDROP)
-- `status` (DRAFT | ACTIVE | CLOSED)
-- `requirements` (array of discord/solana requirements)
+- 3 whitelists per month
+- Up to 500 entries per whitelist
+- Basic Discord integration
+- Perfect for testing
 
-**Entry**: User/wallet entry into an event
+**Pro** ($49/month)
 
-- `walletAddress` (required, must be verified)
-- `status` (PENDING | VALID | INVALID after verification)
-- Unique constraint: one per wallet per event
+- Unlimited whitelists & pre-sales
+- Up to 50,000 entries per event
+- Advanced requirement types
+- Priority support
 
-**Winner**: Selected entries from valid entries
+**Enterprise** (Custom)
 
-- Selected via RANDOM or MANUAL mode
-- Stored for historical record
+- Unlimited everything
+- Custom branding
+- Dedicated support
+- Advanced analytics
 
-**AuditLog**: Track all admin actions
+---
 
-- `action`, `meta` (JSON), `createdAt`
+## Security & Verification
 
-## 🔗 API Endpoints (Draft)
+DropLabz uses **verified, secure** verification:
 
-### Events
+- **Discord verification**: Checks roles, account age, server membership
+- **Solana wallet verification**: Confirms wallet ownership via signature
+- **On-chain eligibility**: Verifies token/NFT holdings directly on Solana
+- **Duplicate detection**: Identifies potential scams and multi-entry attempts
+- **Audit logging**: All admin actions are logged for compliance
+- **One entry per wallet**: Enforced automatically per event
 
-- `POST /api/events` — Create event (admin)
-- `GET /api/events/:eventId` — Get event details with entries
-- `POST /api/events/:eventId/close` — Close event (admin)
-- `POST /api/events/:eventId/winners/pick` — Select winners (admin)
+Your data is isolated and secure. Only you and your community members can see their own information.
 
-### Entries
+---
 
-- `POST /api/entries` — Submit wallet entry
-- `GET /api/events/:eventId/entries` — List entries (paginated)
+## Documentation
 
-### Verification
+For detailed guides and references:
 
-- `POST /api/verification/wallet` — Verify Solana wallet
+- **[Getting Started Guide](./SETUP.md)** — Step-by-step walkthrough for your first whitelist
+- **[Feature Guide](./QUICKSTART.md)** — Overview of all features
+- **[Design System](./DESIGN_SYSTEM.md)** — Visual design and branding
+- **[Full Documentation Index](./DOCUMENTATION_INDEX.md)** — All available resources
 
-## 🤖 Bot Commands
+---
 
-- `/droplabz setup` — Register guild and configure Solana program
-- `/droplabz post <eventId>` — Post event embed to Discord
-- `/droplabz close <eventId>` — Close event and trigger verification
+## FAQ
 
-## 🔬 Testing
+**Q: Do I need a Discord server?**  
+A: It's optional but recommended. You can manage communities on DropLabz without Discord, but Discord integration makes announcements and winner assignment much easier.
 
-### Web App
+**Q: Can I require specific tokens or NFTs?**  
+A: Yes! Pro tier and above support custom Solana token and NFT requirements. We check balances directly on-chain.
 
-```bash
-cd apps/web
-pnpm build
-pnpm type-check
-```
+**Q: What happens if someone tries to enter twice?**  
+A: Duplicate detection automatically flags suspicious patterns. You can manually mark entries as ineligible before drawing winners.
 
-### Bot
+**Q: How do I export winners?**  
+A: Click "Export" and choose "Winners" or "All Entries". Download a CSV with verified wallet addresses ready for your smart contract.
 
-```bash
-cd apps/bot
-pnpm build
-```
+**Q: Is my data safe?**  
+A: All data is encrypted and isolated by community. Only you can see your whitelist entries and member information.
 
-### Solana Program
+**Q: Can I integrate with my own smart contracts?**  
+A: Yes. Export wallet addresses and use them however you'd like—airdrop tools, claim contracts, allow lists, etc.
 
-```bash
-cd programs/verification
-anchor build
-anchor test
-```
+---
 
-## 🌍 Environment Variables
+## Ready to Get Started?
 
-See `.env.example` for all required variables:
+1. **[Sign Up](https://droplabz.com/signup)** — Create your account
+2. **[Create Your Community](https://droplabz.com/communities/new)** — Link your Discord server
+3. **[Create Your First Whitelist](https://droplabz.com/whitelists/create)** — Set your requirements and launch
 
-- `DATABASE_URL` — PostgreSQL connection
-- `NEXTAUTH_SECRET` — NextAuth session encryption
-- `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` — OAuth app
-- `DISCORD_BOT_TOKEN` — Bot token for slash commands
-- `SOLANA_RPC_URL` — Solana cluster RPC endpoint
-- `SOLANA_PROGRAM_ID` — Deployed program ID
-- `APP_BASE_URL` — Web app URL (for Discord bot API calls)
+Questions? Check the **[Getting Started Guide](./SETUP.md)** or reach out through our Discord community.
 
-## 🚀 MVP Scope
+---
 
-1. ✅ Discord OAuth login
-2. ✅ Solana wallet connection (required)
-3. ✅ Community creation from guild selection
-4. ✅ Event creation with Discord + Solana requirements
-5. ✅ Public event entry page
-6. ✅ Server-side + Solana verification
-7. ✅ Bot posting embeds with links
-8. ✅ Random winner selection
-9. ✅ Winner display on web + Discord update
+**DropLabz** — Professional community operations for Solana NFT projects.
 
-## 📝 Development Guidelines
-
-See `.github/copilot-instructions.md` for AI agent guidelines including:
-
-- Architecture patterns and design principles
-- Security and anti-abuse rules
-- Development practices and conventions
-- Solana dApp standards
-
-## 📄 License
-
-MIT
-
-## 🤝 Contributing
-
-Follow the conventions in `.github/copilot-instructions.md` and maintain TypeScript strict mode.
+Built for admins who take their communities seriously.
