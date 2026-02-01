@@ -12,7 +12,7 @@ DropLabz is a **hybrid NFT community platform** built on Solana that combines pr
 - **Solana-Native**: Wallet verification and on-chain eligibility are required
 
 **Design Philosophy**:
-While we do include public discovery features (communities can opt-in to being listed), DropLabz differs from pure marketplace platforms like Subber by emphasizing **admin control and operations**. Our primary focus is empowering community managers with professional infrastructure tools, not building a consumer-facing discovery platform. Communities maintain full control over their whitelists, requirements, and access—they simply have the option to make them discoverable if they choose.
+While we do include public discovery features (communities can opt-in to being listed), DropLabz emphasizes **admin control and operations**. Our primary focus is empowering community managers with professional infrastructure tools, not building a consumer-facing discovery platform. Communities maintain full control over their whitelists, requirements, and access—they simply have the option to make them discoverable if they choose.
 
 **Architecture**:
 
@@ -456,9 +456,10 @@ SOLANA_PROGRAM_ID=
 - [SETUP.md](../SETUP.md) — Detailed setup checklist
 - [DESIGN_SYSTEM.md](../DESIGN_SYSTEM.md) — Visual design guidelines
 - [PLATFORM_ARCHITECTURE.md](../PLATFORM_ARCHITECTURE.md) — Full architecture documentation
-- [SUBBER_INTEGRATION.md](../SUBBER_INTEGRATION.md) — Central Subber integration guide
-- [SUBBER_INTEGRATION_QUICK_REF.md](../SUBBER_INTEGRATION_QUICK_REF.md) — Subber ops quick reference
-- [SUBBER_INTEGRATION_VERIFICATION_REPORT.md](../SUBBER_INTEGRATION_VERIFICATION_REPORT.md) — Subber integration verification
+- [DEPLOYMENT.md](../DEPLOYMENT.md) — Git and Vercel deployment guide
+- [COMPLETED_WORK_SUMMARY.md](../COMPLETED_WORK_SUMMARY.md) — All implemented features
+- [DEVELOPMENT_HISTORY.md](../DEVELOPMENT_HISTORY.md) — Project timeline
+- [TROUBLESHOOTING.md](../TROUBLESHOOTING.md) — Common issues and solutions
 - [docs/guides/WALLET_INTEGRATION.md](../docs/guides/WALLET_INTEGRATION.md) — Wallet setup guide
 - [PRETTIER_SETUP.md](../PRETTIER_SETUP.md) — Code formatting guide
 
