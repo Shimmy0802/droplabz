@@ -21,7 +21,7 @@ export const createEventSchema = z.object({
 export const createEntrySchema = z.object({
     eventId: z.string().cuid(),
     walletAddress: z.string(),
-    discordUserId: z.string().optional(),
+    discordUserId: z.string().nullish(),
 });
 
 export const verifyWalletSchema = z.object({
