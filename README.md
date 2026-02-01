@@ -53,6 +53,4 @@ A toolkit for community managers to create verified whitelists, manage pre-sales
 
 ---
 
-**Ready to launch?** [Sign Up](https://droplabz.com) · [Create Community](https://droplabz.com/communities/new)
-
 DropLabz — Community operations for Solana NFT projects.
