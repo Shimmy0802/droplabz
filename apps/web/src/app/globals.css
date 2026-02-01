@@ -1,0 +1,282 @@
+@import 'tailwindcss';
+
+/* Remove height/overflow restrictions to enable scrolling */
+html,
+body {
+    /* Removed: height: 100%; overflow: hidden; */
+}
+
+/* DropLabz Brand Styling */
+:root {
+    --color-primary-green: #00ff41;
+    --color-primary-green-hover: #00dd33;
+    --color-secondary-blue: #00d4ff;
+    --color-secondary-blue-hover: #0099cc;
+    --color-bg-dark: #000000;
+    --color-bg-card: #0a0a0a;
+}
+
+/* Wallet Adapter Customization */
+.wallet-adapter-button-trigger {
+    background-color: #00ff41 !important;
+    color: #000000 !important;
+    border: none !important;
+    font-weight: 600 !important;
+    transition: all 0.3s !important;
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3) !important;
+}
+
+.wallet-adapter-button-trigger:hover:not(:disabled) {
+    background-color: #00dd33 !important;
+    box-shadow: 0 0 25px rgba(0, 255, 65, 0.5) !important;
+}
+
+.wallet-adapter-button {
+    background-color: #00ff41 !important;
+    color: #000000 !important;
+    border: none !important;
+    font-weight: 600 !important;
+    transition: all 0.3s !important;
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3) !important;
+}
+
+.wallet-adapter-button:hover:not(:disabled) {
+    background-color: #00dd33 !important;
+    box-shadow: 0 0 25px rgba(0, 255, 65, 0.5) !important;
+}
+
+.wallet-adapter-button:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
+
+.wallet-adapter-modal-wrapper {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 50 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.wallet-adapter-modal {
+    background-color: #111528 !important;
+    border: 1px solid rgba(0, 212, 255, 0.2) !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.wallet-adapter-modal-title {
+    color: white !important;
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+}
+
+.wallet-adapter-modal-middle {
+    gap: 0.75rem !important;
+}
+
+.wallet-adapter-modal-button-group {
+    flex-direction: column !important;
+}
+
+.wallet-adapter-modal-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+}
+
+.wallet-adapter-modal-list-item {
+    background-color: #0a0e27 !important;
+    border: 1px solid #00d4ff !important;
+    border-radius: 0.5rem !important;
+    padding: 1rem !important;
+    transition: all 0.3s !important;
+    cursor: pointer !important;
+}
+
+.wallet-adapter-modal-list-item:hover {
+    background-color: rgba(0, 212, 255, 0.1) !important;
+    border-color: #00ff41 !important;
+}
+
+.wallet-adapter-modal-list-item button {
+    color: #00d4ff !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.75rem !important;
+}
+
+.wallet-adapter-modal-list-item:hover button {
+    color: #00ff41 !important;
+}
+
+.wallet-adapter-button-end-icon,
+.wallet-adapter-button-start-icon,
+.wallet-adapter-modal-list-item-icon {
+    display: flex !important;
+    align-items: center !important;
+}
+
+.wallet-adapter-modal-overlay {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.wallet-adapter-modal-container {
+    max-width: 400px !important;
+    width: 100% !important;
+}
+
+/* Glow Effects */
+@keyframes glow-green {
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(0, 255, 65, 0.4);
+    }
+}
+
+@keyframes glow-blue {
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+    }
+}
+
+.glow-green {
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+}
+
+.glow-green-hover:hover {
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.4);
+}
+
+.glow-blue {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+.glow-blue-hover:hover {
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+}
+
+/* Subtle animation for hero elements */
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.float-animation {
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Responsive text sizing */
+@media (max-width: 768px) {
+    .wallet-adapter-button {
+        font-size: 0.875rem !important;
+    }
+}
+
+/* Pulsing border animation for urgent items */
+@keyframes pulse-border {
+    0%,
+    100% {
+        border-color: rgba(0, 255, 65, 0.6);
+        box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+    }
+    50% {
+        border-color: rgba(0, 255, 65, 1);
+        box-shadow: 0 0 40px rgba(0, 255, 65, 0.5);
+    }
+}
+
+.animate-pulse-border {
+    animation: pulse-border 2s ease-in-out infinite;
+}
+
+/* Custom Scrollbar for Opportunity Grid Container */
+.opportunity-grid-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 255, 65, 0.3) rgba(17, 21, 40, 0.5);
+}
+
+.opportunity-grid-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.opportunity-grid-container::-webkit-scrollbar-track {
+    background: rgba(17, 21, 40, 0.5);
+    border-radius: 4px;
+}
+
+.opportunity-grid-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 65, 0.3);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.opportunity-grid-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 65, 0.5);
+}
+
+/* Smooth scrolling behavior */
+.opportunity-grid-container {
+    scroll-behavior: smooth;
+}
+
+/* Hide scrollbar for horizontal filter bar */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* Global elegant scrollbar styling */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 255, 65, 0.2) transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 65, 0.2);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 65, 0.4);
+}
+
+/* Darker scrollbar for sidebar and dark panels */
+.bg-\[\#1a1d3a\]::-webkit-scrollbar-thumb,
+.bg-\[\#0a0e27\]::-webkit-scrollbar-thumb {
+    background: rgba(0, 212, 255, 0.2);
+}
+
+.bg-\[\#1a1d3a\]::-webkit-scrollbar-thumb:hover,
+.bg-\[\#0a0e27\]::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 212, 255, 0.4);
+}

@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+.nyc_output/
+
+# Solana
+.anchor/
+target/
+Cargo.lock
+**/*.rs.bk
+
+# Logs
+*.log
+logs/
+
+# Misc
+.turbo/
+# Uploads (local file storage)
+apps/web/public/uploads/

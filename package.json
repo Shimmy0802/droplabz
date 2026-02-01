@@ -1,0 +1,30 @@
+{
+    "name": "droplabz",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Solana-native, multi-tenant community operations platform",
+    "packageManager": "pnpm@9.0.0",
+    "scripts": {
+        "dev": "pnpm -r --parallel dev",
+        "build": "pnpm -r --parallel build",
+        "lint": "pnpm -r --parallel lint",
+        "type-check": "pnpm -r --parallel type-check",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "db:push": "cd apps/web && pnpm db:push",
+        "db:studio": "cd apps/web && pnpm db:studio",
+        "db:migrate": "cd apps/web && pnpm db:migrate"
+    },
+    "prettier": "@solana/prettier-config-solana",
+    "devDependencies": {
+        "@types/node": "^25.0.10",
+        "typescript": "^5.4.0",
+        "prettier": "^3.7.4",
+        "@solana/prettier-config-solana": "^0.0.6"
+    },
+    "pnpm": {
+        "overrides": {
+            "typescript": "^5.4.0"
+        }
+    }
+}

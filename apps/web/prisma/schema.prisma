@@ -1,0 +1,413 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MEMBER
+}
+
+enum CommunityMemberRole {
+  OWNER
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+enum SubscriptionTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+}
+
+enum CommunityVerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AnnouncementTrigger {
+  MANUAL
+  CREATED
+  ACTIVE
+  ENDING_SOON
+  WINNERS_PICKED
+  CLOSED
+}
+
+enum AnnouncementStatus {
+  QUEUED
+  SCHEDULED
+  SENDING
+  SENT
+  FAILED
+  FAILED_PERMANENT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String?  @unique
+  username     String?  @unique
+  passwordHash String?
+  role         UserRole @default(MEMBER)
+  discordId    String?  @unique
+  discordUsername String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedCommunities  Community[]
+  communityMembers  CommunityMember[]
+  reviews           Review[]
+  auditLogs         AuditLog[]
+  superAdminLogs    SuperAdminAuditLog[]
+  wallets           UserWallet[]
+  announcements     Announcement[]
+
+  @@index([email])
+  @@index([discordId])
+}
+
+model UserWallet {
+  id             String   @id @default(cuid())
+  userId         String
+  walletAddress  String
+  isPrimary      Boolean  @default(false)
+  verifiedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, walletAddress])
+  @@index([userId])
+  @@index([walletAddress])
+}
+
+model Community {
+  id          String   @id @default(cuid())
+  ownerId     String
+  guildId     String?  @unique
+  discordGuildName String?  // Guild name for displaying to admins
+  discordAnnouncementChannelId String?  // Channel ID for posting announcements
+  discordAnnouncementChannelName String?  // Channel name for displaying to admins
+  slug        String   @unique
+  name        String
+  description String?
+  icon        String?
+  banner      String?  // Banner/cover image URL
+  isListed    Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
+  isVerified  Boolean  @default(false)
+  verificationStatus CommunityVerificationStatus @default(PENDING)
+  verificationTicketId String?
+  verificationRequestedAt DateTime?
+  verificationApprovedAt DateTime?
+  verifiedBy String?
+  boostLevel  Int      @default(0)
+  categories  String[] @default([])
+  tags        String[] @default([])
+  rating      Float?
+  solanaConfig Json?
+  // NFT Collection
+  nftMintAddress String?  // Solana NFT collection mint address
+  // Social Links
+  socials      Json?     // { twitter, discord, website, instagram } with URLs
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner            User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members          CommunityMember[]
+  events           Event[]
+  presales         Presale[]
+  auditLogs        AuditLog[]
+  subscription     Subscription?
+  reviews          Review[]
+  announcements    Announcement[]
+  eventAnnouncements EventAnnouncement[]
+
+  @@index([ownerId])
+  @@index([slug])
+  @@index([isListed])
+  @@index([isFeatured])
+  @@index([isVerified])
+  @@index([verificationStatus])
+}
+
+model CommunityMember {
+  id          String              @id @default(cuid())
+  communityId String
+  userId      String
+  role        CommunityMemberRole @default(MEMBER)
+  isWhitelisted Boolean            @default(false)
+  whitelistReason String?
+  whitelistedAt   DateTime?
+  whitelistedBy   String?           // User ID of admin who whitelisted
+  isBlacklisted   Boolean           @default(false)
+  blacklistReason String?
+  blacklistedAt    DateTime?
+  blacklistedBy    String?          // User ID of admin who blacklisted
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@index([communityId])
+  @@index([userId])
+  @@index([isWhitelisted])
+  @@index([isBlacklisted])
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  communityId      String             @unique
+  tier             SubscriptionTier   @default(FREE)
+  status           SubscriptionStatus @default(ACTIVE)
+  stripeCustomerId String?            @unique
+  stripeSubId      String?            @unique
+  currentPeriodEnd DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([status])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  communityId String
+  userId      String
+  rating      Int      // 1-5 stars
+  comment     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@index([communityId])
+  @@index([userId])
+  @@index([rating])
+}
+
+model Event {
+  id             String   @id @default(cuid())
+  communityId    String
+  type           String   // GIVEAWAY | WHITELIST | ACCESS | AIRDROP
+  title          String
+  description    String?
+  prize          String?
+  imageUrl       String?
+  startAt        DateTime @default(now())
+  endAt          DateTime
+  status         String   @default("DRAFT") // DRAFT | ACTIVE | CLOSED
+  maxWinners     Int      @default(1)
+  selectionMode  String   @default("RANDOM") // RANDOM | MANUAL | FCFS
+  reservedSpots  Int      @default(0) // Team spots reserved from maxWinners
+  autoAssignDiscordRole Boolean @default(false) // Auto-assign role to winners
+  winnerDiscordRoleId String? // Discord role ID to assign to winners
+  autoAnnounceOnCreate Boolean @default(false) // Auto-announce when event created
+  autoAnnounceWinners Boolean @default(false) // Auto-announce when winners picked
+  createdBy      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  community      Community           @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  requirements   Requirement[]
+  entries        Entry[]
+  winners        Winner[]
+  announcements  EventAnnouncement[]
+
+  @@index([communityId])
+  @@index([status])
+}
+
+model Requirement {
+  id            String   @id @default(cuid())
+  eventId       String?  // For Event/Whitelist requirements
+  presaleTierId String?  // For PresaleTier requirements
+  type          String   // DISCORD_MEMBER_REQUIRED, DISCORD_ROLE_REQUIRED, etc.
+  config        Json     // Flexible config for different requirement types
+  createdAt     DateTime @default(now())
+
+  event        Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  presaleTier  PresaleTier?  @relation(fields: [presaleTierId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([presaleTierId])
+}
+
+model Entry {
+  id            String   @id @default(cuid())
+  eventId       String
+  userId        String?
+  discordUserId String?
+  walletAddress String
+  status        String   @default("PENDING") // PENDING | VALID | INVALID
+  isIneligible  Boolean  @default(false) // Marked as duplicate/invalid
+  ineligibilityReason String? // Reason for ineligibility
+  metadata      Json?    // For presale tier info: { tierId, tierName, allocationAmount }
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  winners Winner[]
+
+  @@unique([eventId, walletAddress])
+  @@index([eventId])
+  @@index([walletAddress])
+  @@index([status])
+}
+
+model Winner {
+  id        String   @id @default(cuid())
+  eventId   String
+  entryId   String
+  pickedAt  DateTime @default(now())
+  pickedBy  String
+  createdAt DateTime @default(now())
+
+  event Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  entry Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([entryId])
+}
+
+model Presale {
+  id          String   @id @default(cuid())
+  communityId String
+  name        String
+  description String?
+  status      String   @default("DRAFT") // DRAFT | ACTIVE | CLOSED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  community Community     @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  tiers      PresaleTier[]
+
+  @@index([communityId])
+  @@index([status])
+}
+
+model PresaleTier {
+  id                String   @id @default(cuid())
+  presaleId         String
+  name              String
+  maxSpots          Int
+  allocationAmount  Int
+  spotsUsed         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  presale      Presale       @relation(fields: [presaleId], references: [id], onDelete: Cascade)
+  requirements Requirement[]
+
+  @@index([presaleId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  communityId String
+  actorId     String
+  action      String
+  meta        Json?
+  createdAt   DateTime @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  actor     User      @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model SuperAdminAuditLog {
+  id          String   @id @default(cuid())
+  actorId     String
+  action      String    // e.g., "DELETE_COMMUNITY", "PROMOTE_USER", "MODIFY_SETTINGS"
+  targetId    String?   // ID of affected resource (community, user, etc.)
+  targetType  String?   // "COMMUNITY", "USER", "SETTING", etc.
+  meta        Json?     // Additional context (old values, new values, reason, etc.)
+  ipAddress   String?
+  userAgent   String?
+  status      String    @default("SUCCESS") // SUCCESS, FAILED
+  createdAt   DateTime  @default(now())
+
+  actor User @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([actorId])
+  @@index([action])
+  @@index([targetType])
+  @@index([createdAt])
+}
+
+model EventAnnouncement {
+  id              String                @id @default(cuid())
+  eventId         String
+  communityId     String
+  
+  trigger         AnnouncementTrigger
+  status          AnnouncementStatus    @default(QUEUED)
+  
+  discordMessageId String?
+  discordChannelId String?
+  discordGuildId   String?
+  
+  scheduledFor    DateTime              @default(now())
+  sentAt          DateTime?
+  
+  attemptCount    Int                   @default(0)
+  maxAttempts     Int                   @default(3)
+  lastError       String?
+  
+  triggeredBy     String?
+  
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  community   Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, trigger])
+  @@index([eventId])
+  @@index([communityId])
+  @@index([status])
+  @@index([trigger])
+  @@index([scheduledFor])
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  communityId String
+  authorId    String
+  title       String
+  content     String
+  isPinned    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([authorId])
+  @@index([createdAt])
+}

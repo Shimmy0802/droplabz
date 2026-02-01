@@ -1,0 +1,19 @@
+[package]
+name = "droplabz-anchor"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = ["programs/*"]
+
+[workspace.dependencies]
+anchor-lang = "0.29.0"
+anchor-spl = "0.29.0"
+solana-program = "1.17.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true }
