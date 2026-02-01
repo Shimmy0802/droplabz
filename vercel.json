@@ -1,0 +1,30 @@
+{
+    "buildCommand": "cd apps/web && pnpm build",
+    "devCommand": "cd apps/web && pnpm dev",
+    "installCommand": "pnpm install",
+    "framework": "nextjs",
+    "outputDirectory": "apps/web/.next",
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "env": {
+        "DATABASE_URL": "@database-url",
+        "NEXTAUTH_SECRET": "@nextauth-secret",
+        "NEXTAUTH_URL": "@nextauth-url",
+        "DISCORD_CLIENT_ID": "@discord-client-id",
+        "DISCORD_CLIENT_SECRET": "@discord-client-secret",
+        "DISCORD_BOT_TOKEN": "@discord-bot-token",
+        "NEXT_PUBLIC_DISCORD_TICKET_URL": "@next-public-discord-ticket-url",
+        "SUPER_ADMIN_DISCORD_IDS": "@super-admin-discord-ids",
+        "SUPER_ADMIN_WALLET_ADDRESSES": "@super-admin-wallet-addresses",
+        "SOLANA_RPC_URL": "@solana-rpc-url",
+        "NEXT_PUBLIC_SOLANA_NETWORK": "@next-public-solana-network",
+        "NEXT_PUBLIC_SOLANA_RPC_URL": "@next-public-solana-rpc-url",
+        "SOLANA_PROGRAM_ID": "@solana-program-id",
+        "APP_BASE_URL": "@app-base-url"
+    },
+    "build": {
+        "env": {
+            "SKIP_ENV_VALIDATION": "1"
+        }
+    }
+}
