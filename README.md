@@ -127,31 +127,6 @@ Manually select winners or let DropLabz auto-draw. Export verified wallet addres
 
 ---
 
-## Subscription Tiers
-
-**Free**
-
-- 3 whitelists per month
-- Up to 500 entries per whitelist
-- Basic Discord integration
-- Perfect for testing
-
-**Pro** ($49/month)
-
-- Unlimited whitelists & pre-sales
-- Up to 50,000 entries per event
-- Advanced requirement types
-- Priority support
-
-**Enterprise** (Custom)
-
-- Unlimited everything
-- Custom branding
-- Dedicated support
-- Advanced analytics
-
----
-
 ## Security & Verification
 
 DropLabz uses **verified, secure** verification:
