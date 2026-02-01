@@ -60,7 +60,7 @@
 #### Enhanced Announcements
 
 - Professional multi-section embeds
-- Subber.xyz-inspired layout
+- Professional multi-section layout
 - DropLabz brand colors
 - Event type-specific designs
 - Time remaining indicators
@@ -110,7 +110,7 @@
 - Added missing tabs (Giveaways, Members)
 - Ensured sidebar and tabs match
 
-### Phase 5: Subber Integration (Jan 29, 2026)
+### Phase 5: Advanced Admin Tools (Jan 29, 2026)
 
 #### Features Integrated
 

@@ -2,11 +2,6 @@
 
 Use this checklist to ensure your development environment is properly configured.
 
-For Subber integration behavior and admin workflows, see:
-
-- [SUBBER_INTEGRATION.md](./SUBBER_INTEGRATION.md)
-- [SUBBER_INTEGRATION_QUICK_REF.md](./SUBBER_INTEGRATION_QUICK_REF.md)
-
 ## Prerequisites
 
 - [ ] Node.js 18+ installed (`node --version`)

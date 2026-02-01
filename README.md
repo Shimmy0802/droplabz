@@ -4,14 +4,6 @@ A Solana-native, multi-tenant community operations platform.
 
 > **📚 [View the complete Documentation Index →](./DOCUMENTATION_INDEX.md)**
 
-## ⭐ Subber Integration (Central Doc Set)
-
-These are the canonical docs for Subber-inspired features in DropLabz:
-
-- [SUBBER_INTEGRATION.md](./SUBBER_INTEGRATION.md)
-- [SUBBER_INTEGRATION_QUICK_REF.md](./SUBBER_INTEGRATION_QUICK_REF.md)
-- [SUBBER_INTEGRATION_VERIFICATION_REPORT.md](./SUBBER_INTEGRATION_VERIFICATION_REPORT.md)
-
 ## 🏗️ Architecture
 
 ```text

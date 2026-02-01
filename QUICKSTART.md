@@ -1,10 +1,5 @@
 # DropLabz Developer Quick Start
 
-For Subber-aligned features (duplicates, ineligible entries, exports, auto-draw), see:
-
-- [SUBBER_INTEGRATION.md](./SUBBER_INTEGRATION.md)
-- [SUBBER_INTEGRATION_QUICK_REF.md](./SUBBER_INTEGRATION_QUICK_REF.md)
-
 ## Monorepo Commands
 
 ```bash
