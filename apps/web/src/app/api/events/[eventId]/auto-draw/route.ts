@@ -13,7 +13,7 @@ const scheduleAutoDrawSchema = z.object({
  * Schedule automatic winner drawing at a specified time
  * POST /api/events/[eventId]/auto-draw
  *
- * Inspired by Subber: "schedule it to run and auto-draw at specified times"
+ * Schedule automatic winner draws at specified times
  *
  * Note: This endpoint sets the schedule. The actual drawing would be triggered
  * by a cron job or scheduled task that checks for events with:

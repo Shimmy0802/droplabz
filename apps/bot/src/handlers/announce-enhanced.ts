@@ -1,11 +1,11 @@
 /**
  * Enhanced Discord Announcement System
  *
- * Professional multi-section embed design inspired by Subber.xyz
+ * Professional multi-section embed design for Discord announcements
  * optimized for DropLabz brand and all event types.
  *
  * Design Philosophy:
- * - Subber-style multi-section layout with DropLabz color palette
+ * - Professional multi-section layout with DropLabz color palette
  * - Clear visual hierarchy with strategic emoji and formatting
  * - Event image/thumbnail prominently displayed
  * - Requirements, Details, and Links sections cleanly organized

@@ -64,7 +64,7 @@ export interface EventData {
  * - Heavy emoji usage
  * - Better visual organization
  * - Much more professional appearance
- * - Similar to Subber examples
+ * - Professional event embed formatting
  *
  * Returns plain JSON object (no discord.js dependency)
  */

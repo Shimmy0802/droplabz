@@ -26,7 +26,7 @@ interface DuplicateResponse {
 /**
  * Duplicate Detection Panel
  *
- * Inspired by Subber: "calling out potential dupes and letting you mark them as ineligible"
+ * Advanced duplicate detection: identify potential duplicates and mark them as ineligible
  * Displays flagged entries with risk scores and allows admins to mark as ineligible
  */
 export function DuplicateDetectionPanel({ eventId, onMarkIneligible }: DuplicateDetectionProps) {

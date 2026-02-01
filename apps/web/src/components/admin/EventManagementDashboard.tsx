@@ -39,7 +39,7 @@ interface Stats {
 /**
  * Enhanced Event Management Dashboard
  *
- * Integrates Subber-inspired features:
+ * Integrates advanced admin features:
  * - Duplicate detection
  * - Entry export (CSV)
  * - Auto-draw scheduling

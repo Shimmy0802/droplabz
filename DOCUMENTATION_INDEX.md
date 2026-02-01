@@ -6,12 +6,6 @@ Welcome to the DropLabz documentation. This index guides you to the right resour
 
 ## 🚀 Quick Navigation
 
-### **Subber integration (central doc set)**
-
-- **[SUBBER_INTEGRATION.md](./SUBBER_INTEGRATION.md)** — Full integration overview and feature mapping
-- **[SUBBER_INTEGRATION_QUICK_REF.md](./SUBBER_INTEGRATION_QUICK_REF.md)** — Operator quick reference
-- **[SUBBER_INTEGRATION_VERIFICATION_REPORT.md](./SUBBER_INTEGRATION_VERIFICATION_REPORT.md)** — Integration verification report
-
 ### **I'm just getting started**
 
 - **[QUICKSTART.md](./QUICKSTART.md)** — Development commands and setup checklists
@@ -46,17 +40,14 @@ Welcome to the DropLabz documentation. This index guides you to the right resour
 
 ## 📋 Core Documentation (Root Level)
 
-| Document                                      | Purpose                                         | Audience                 |
-| --------------------------------------------- | ----------------------------------------------- | ------------------------ |
-| **README.md**                                 | Project overview, quick start, tech stack       | Everyone                 |
-| **QUICKSTART.md**                             | Common commands and development workflows       | Developers               |
-| **SETUP.md**                                  | Detailed environment configuration guide        | New developers           |
-| **DESIGN_SYSTEM.md**                          | Visual identity, colors, components, typography | Designers, Frontend devs |
-| **PLATFORM_ARCHITECTURE.md**                  | Complete system design, features, data flows    | Architects, Senior devs  |
-| **PRETTIER_SETUP.md**                         | Code formatting rules and enforcement           | All developers           |
-| **SUBBER_INTEGRATION.md**                     | Subber integration scope and implementation     | Admins, Engineers        |
-| **SUBBER_INTEGRATION_QUICK_REF.md**           | Subber ops quick reference                      | Operators                |
-| **SUBBER_INTEGRATION_VERIFICATION_REPORT.md** | Verification report for Subber features         | QA, Engineering          |
+| Document                     | Purpose                                         | Audience                 |
+| ---------------------------- | ----------------------------------------------- | ------------------------ |
+| **README.md**                | Project overview, quick start, tech stack       | Everyone                 |
+| **QUICKSTART.md**            | Common commands and development workflows       | Developers               |
+| **SETUP.md**                 | Detailed environment configuration guide        | New developers           |
+| **DESIGN_SYSTEM.md**         | Visual identity, colors, components, typography | Designers, Frontend devs |
+| **PLATFORM_ARCHITECTURE.md** | Complete system design, features, data flows    | Architects, Senior devs  |
+| **PRETTIER_SETUP.md**        | Code formatting rules and enforcement           | All developers           |
 
 ---
 
@@ -79,7 +70,7 @@ pnpm db:studio        # Open Prisma Studio
 - **Database schema**: See apps/web/prisma/schema.prisma
 - **Auth middleware**: See apps/web/src/lib/auth/middleware.ts
 - **Solana integration**: See docs/guides/WALLET_INTEGRATION.md
-- **Subber feature parity**: See SUBBER_INTEGRATION.md
+- **Advanced admin features**: See COMPLETED_WORK_SUMMARY.md
 
 ### **Design References**
 

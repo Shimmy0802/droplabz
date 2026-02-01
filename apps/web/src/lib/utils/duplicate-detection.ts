@@ -1,7 +1,7 @@
 /**
  * Duplicate Entry Detection Utilities
  *
- * Inspired by Subber's duplicate detection features, this module identifies
+ * This module identifies
  * potential duplicate entries across multiple signals:
  * - Same wallet address (already enforced by unique constraint)
  * - Same Discord user ID across different wallets

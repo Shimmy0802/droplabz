@@ -11,7 +11,7 @@ interface AutoDrawSchedulerProps {
 /**
  * Auto-Draw Scheduler Component
  *
- * Inspired by Subber: "schedule it to run and auto-draw at specified times"
+ * Schedule automatic winner draws at specified times
  * Allows admins to enable automatic winner drawing when event ends
  */
 export function AutoDrawScheduler({ eventId, eventEndDate, selectionMode }: AutoDrawSchedulerProps) {

@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server';
  * Export event data (entries or winners) as CSV
  * GET /api/events/[eventId]/export?type=entries|winners
  *
- * Inspired by Subber: "export wallet addresses" and "full list of buyers,
+ * Export wallet addresses and full list of entries,
  * their wallets, and transaction details, ready to export for your airdrop or mint claim"
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {

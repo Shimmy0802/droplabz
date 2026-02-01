@@ -13,7 +13,7 @@ const markIneligibleSchema = z.object({
  * Mark entries as ineligible (manual admin override)
  * POST /api/events/[eventId]/entries/mark-ineligible
  *
- * Inspired by Subber: "mark them as ineligible before drawing winners"
+ * Mark entries as ineligible before drawing winners
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
     try {

@@ -12,7 +12,7 @@ interface ExportButtonProps {
 /**
  * Export Button Component
  *
- * Inspired by Subber: "export wallet addresses" and
+ * Export wallet addresses and
  * "full list ready to export for your airdrop or mint claim"
  */
 export function ExportButton({ eventId, eventTitle, type = 'winners', includeIneligible = false }: ExportButtonProps) {
