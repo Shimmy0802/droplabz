@@ -114,6 +114,11 @@ export async function POST(request: NextRequest) {
             201,
         );
     } catch (error) {
+        console.error('Entry creation error:', error);
+        if (error instanceof Error) {
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+        }
         return apiError(error);
     }
 }
