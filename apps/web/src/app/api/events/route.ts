@@ -21,7 +21,7 @@ const createEventSchema = z.object({
         .array(
             z.object({
                 type: z.string(),
-                config: z.record(z.string(), z.any()),
+                config: z.record(z.string(), z.unknown()),
             }),
         )
         .optional(),
@@ -135,7 +135,11 @@ export async function GET(req: NextRequest) {
         }
 
         // Build where clause
-        const where: any = { communityId };
+        interface EventWhereInput {
+            communityId: string;
+            type?: string;
+        }
+        const where: EventWhereInput = { communityId };
         if (type) {
             where.type = type;
         }

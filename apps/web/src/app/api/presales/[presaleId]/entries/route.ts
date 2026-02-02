@@ -155,15 +155,23 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pre
         });
 
         // Transform to include tier info
-        const transformed = entries.map(entry => ({
-            id: entry.id,
-            walletAddress: entry.walletAddress,
-            discordUserId: entry.discordUserId,
-            tierId: (entry.metadata as any)?.tierId || '',
-            tierName: (entry.metadata as any)?.tierName || 'Unknown',
-            allocationAmount: (entry.metadata as any)?.allocationAmount || 0,
-            createdAt: entry.createdAt,
-        }));
+        interface EntryMetadata {
+            tierId?: string;
+            tierName?: string;
+            allocationAmount?: number;
+        }
+        const transformed = entries.map(entry => {
+            const metadata = (entry.metadata as EntryMetadata) || {};
+            return {
+                id: entry.id,
+                walletAddress: entry.walletAddress,
+                discordUserId: entry.discordUserId,
+                tierId: metadata.tierId || '',
+                tierName: metadata.tierName || 'Unknown',
+                allocationAmount: metadata.allocationAmount || 0,
+                createdAt: entry.createdAt,
+            };
+        });
 
         return NextResponse.json(transformed);
     } catch (error) {

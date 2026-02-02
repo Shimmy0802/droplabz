@@ -180,10 +180,10 @@ export default function WhitelistDetailsPage() {
 
                 {/* Filter Tabs */}
                 <div className="flex gap-2 mb-6 border-b border-gray-700">
-                    {['ALL', 'VALID', 'INVALID', 'PENDING'].map(status => (
+                    {(['ALL', 'VALID', 'INVALID', 'PENDING'] as const).map(status => (
                         <button
                             key={status}
-                            onClick={() => setFilterStatus(status as any)}
+                            onClick={() => setFilterStatus(status)}
                             className={`px-4 py-3 font-medium border-b-2 transition ${
                                 filterStatus === status
                                     ? 'border-[#00ff41] text-[#00ff41]'

@@ -88,7 +88,7 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
         setRequirements(requirements.filter(r => r.id !== id));
     };
 
-    const handleRequirementChange = (id: string, key: string, value: any) => {
+    const handleRequirementChange = (id: string, key: string, value: unknown) => {
         setRequirements(
             requirements.map(r =>
                 r.id === id
@@ -121,7 +121,19 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
 
             const endDateTime = new Date(`${formData.endDate}T${formData.endTime}:00Z`);
 
-            const updateData: any = {
+            type EventUpdateData = {
+                title: string;
+                description?: string;
+                prize?: string;
+                maxWinners: number;
+                reservedSpots: number;
+                selectionMode: 'RANDOM' | 'MANUAL' | 'FCFS';
+                status: 'DRAFT' | 'ACTIVE' | 'CLOSED';
+                autoAssignDiscordRole: boolean;
+                winnerDiscordRoleId?: string;
+                endAt: string;
+            };
+            const updateData: EventUpdateData = {
                 title: formData.title,
                 description: formData.description || undefined,
                 prize: formData.prize || undefined,
@@ -205,7 +217,12 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
                     <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
                     <select
                         value={formData.status}
-                        onChange={e => setFormData({ ...formData, status: e.target.value as any })}
+                        onChange={e => {
+                            const status = e.target.value;
+                            if (status === 'DRAFT' || status === 'ACTIVE' || status === 'CLOSED') {
+                                setFormData({ ...formData, status });
+                            }
+                        }}
                         className="w-full px-4 py-2 bg-[#111528] border border-[#00d4ff]/30 rounded-lg text-white focus:border-[#00ff41] focus:outline-none"
                         disabled={event.status === 'CLOSED'}
                     >
@@ -222,7 +239,12 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
                     <label className="block text-sm font-medium text-gray-300 mb-2">Selection Mode</label>
                     <select
                         value={formData.selectionMode}
-                        onChange={e => setFormData({ ...formData, selectionMode: e.target.value as any })}
+                        onChange={e => {
+                            const mode = e.target.value;
+                            if (mode === 'RANDOM' || mode === 'MANUAL' || mode === 'FCFS') {
+                                setFormData({ ...formData, selectionMode: mode });
+                            }
+                        }}
                         className="w-full px-4 py-2 bg-[#111528] border border-[#00d4ff]/30 rounded-lg text-white focus:border-[#00ff41] focus:outline-none"
                     >
                         <option value="RANDOM">Random (Raffle)</option>

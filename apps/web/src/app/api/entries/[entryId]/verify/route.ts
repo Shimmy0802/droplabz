@@ -58,7 +58,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ en
         const session = await auth();
 
         // Verify entry
-        const verificationResult = await verifyEntry(entry, community, (session as any)?.discordAccessToken);
+        const verificationResult = await verifyEntry(entry, community, session?.discordAccessToken);
 
         // Update entry status
         await db.entry.update({

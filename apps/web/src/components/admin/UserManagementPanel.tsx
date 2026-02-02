@@ -239,7 +239,12 @@ export default function UserManagementPanel({ communityId, onActionComplete }: U
                     <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
                     <select
                         value={filter}
-                        onChange={e => setFilter(e.target.value as any)}
+                        onChange={e => {
+                            const value = e.target.value;
+                            if (value === 'ALL' || value === 'NORMAL' || value === 'WHITELISTED' || value === 'BLACKLISTED') {
+                                setFilter(value);
+                            }
+                        }}
                         className="w-full rounded-lg border border-[#00d4ff] bg-[#0a0e27] px-4 py-2 text-white focus:outline-none focus:border-[#00ff41]"
                     >
                         <option value="ALL">All Members</option>

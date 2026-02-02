@@ -8,6 +8,7 @@
 
 import { useConnection, useWallet, useLocalStorage } from '@solana/wallet-adapter-react';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
+import type { WalletName } from '@solana/wallet-adapter-base';
 import { useCallback } from 'react';
 
 /**
@@ -40,13 +41,13 @@ export function useWalletConnect() {
     const { select, wallets, connect } = useWallet();
 
     return useCallback(
-        async (walletName?: string) => {
+        async (walletName?: WalletName) => {
             try {
                 if (!walletName && wallets.length > 0) {
                     // If no wallet specified, select the first available
                     select(wallets[0].adapter.name);
                 } else if (walletName) {
-                    select(walletName as any);
+                    select(walletName);
                 }
 
                 await connect();

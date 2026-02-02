@@ -24,7 +24,7 @@ export async function GET() {
         }
 
         // Get the Discord access token from the session
-        const discordAccessToken = (session as any).discordAccessToken;
+        const discordAccessToken = session.discordAccessToken;
 
         if (!discordAccessToken) {
             return NextResponse.json({ error: 'Discord access token not available' }, { status: 401 });

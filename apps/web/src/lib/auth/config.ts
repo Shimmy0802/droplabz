@@ -148,7 +148,7 @@ export const authConfig: NextAuthOptions = {
                 session.user.role = token.role as string;
                 // Include Discord access token if available (for guild verification)
                 if (token.discordAccessToken) {
-                    (session as any).discordAccessToken = token.discordAccessToken as string;
+                    session.discordAccessToken = token.discordAccessToken as string;
                 }
             }
 
@@ -163,7 +163,7 @@ export const authConfig: NextAuthOptions = {
                     // Set email to DB value (may be null for Discord-only accounts)
                     session.user.email = (user.email as string) || session.user.email;
                     if (user.discordId) {
-                        (session as any).discordId = user.discordId;
+                        session.discordId = user.discordId;
                     }
                 }
             }

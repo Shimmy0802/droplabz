@@ -63,7 +63,7 @@ export default function Header() {
                                     Profile
                                 </Link>
                                 <button
-                                    onClick={() => signOut({ redirect: true, redirectTo: '/' })}
+                                    onClick={() => signOut({ redirect: true })}
                                     className="px-4 py-2 rounded-lg text-sm bg-red-600/20 border border-red-600/40 text-red-400 hover:bg-red-600/30 hover:border-red-600/60 transition"
                                 >
                                     Logout

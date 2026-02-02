@@ -16,7 +16,7 @@ const createPresaleSchema = z.object({
             requirements: z.array(
                 z.object({
                     type: z.string(),
-                    config: z.record(z.string(), z.any()),
+                    config: z.record(z.string(), z.unknown()),
                 }),
             ),
         }),
@@ -96,7 +96,11 @@ export async function GET(req: NextRequest) {
         // Verify community access
         await requireCommunityAdmin(communityId);
 
-        const where: any = { communityId };
+        interface PresaleWhereInput {
+            communityId: string;
+            status?: string;
+        }
+        const where: PresaleWhereInput = { communityId };
         if (status) {
             where.status = status;
         }

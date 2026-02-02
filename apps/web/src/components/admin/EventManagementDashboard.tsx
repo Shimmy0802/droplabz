@@ -237,7 +237,7 @@ export function EventManagementDashboard({ eventId, communitySlug }: EventManage
                             communityId={event.communityId}
                             eventTitle={event.title}
                             eventDescription={event.title}
-                            eventType={event.type as any}
+                            eventType={event.type as 'GIVEAWAY' | 'WHITELIST' | 'PRESALE' | 'COLLABORATION'}
                         />
                     </div>
                 )}
