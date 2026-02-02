@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, requireCommunityAdmin } from '@/lib/auth/middleware';
 import { db } from '@/lib/db';
+import { ApiError } from '@/lib/api-utils';
 import { z } from 'zod';
 
 // Validate Solana public key format (base58, ~44 chars)
@@ -97,8 +98,19 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
         return NextResponse.json(community);
     } catch (error) {
-        console.error('Error fetching community:', error);
-        return NextResponse.json({ error: 'Failed to fetch community' }, { status: 500 });
+        console.error('[API Error] GET /api/communities/[communityId]:', error);
+        
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { error: error.code, message: error.message },
+                { status: error.statusCode }
+            );
+        }
+
+        return NextResponse.json(
+            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch community' },
+            { status: 500 }
+        );
     }
 }
 
@@ -170,18 +182,28 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         return NextResponse.json(updatedCommunity);
     } catch (error) {
-        console.error('Error updating community:', error);
+        console.error('[API Error] PATCH /api/communities/[communityId]:', error);
 
         if (error instanceof z.ZodError) {
             return NextResponse.json(
                 {
-                    error: 'Invalid data',
+                    error: 'VALIDATION_ERROR',
                     issues: error.issues,
                 },
-                { status: 400 },
+                { status: 400 }
+            );
+        }
+        
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { error: error.code, message: error.message },
+                { status: error.statusCode }
             );
         }
 
-        return NextResponse.json({ error: 'Failed to update community' }, { status: 500 });
+        return NextResponse.json(
+            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to update community' },
+            { status: 500 }
+        );
     }
 }
