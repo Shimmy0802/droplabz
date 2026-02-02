@@ -2,7 +2,6 @@
   "buildCommand": "cd apps/web && pnpm build",
   "devCommand": "cd apps/web && pnpm dev",
   "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
-  "framework": "nextjs",
   "outputDirectory": "apps/web/.next",
   "env": {
     "PNPM_HOME": "/root/.pnpm",
