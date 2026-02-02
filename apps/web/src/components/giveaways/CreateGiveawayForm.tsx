@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface GiveawayFormProps {
     communityId: string;

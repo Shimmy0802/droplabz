@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 
 interface Community {
     id: string;
@@ -33,7 +32,6 @@ interface Community {
 
 export default function CommunitiesManagementPage() {
     const { data: session } = useSession();
-    const router = useRouter();
     const [communities, setCommunities] = useState<Community[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

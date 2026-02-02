@@ -84,7 +84,6 @@ type TabType = 'active' | 'past' | 'presales' | 'announcements' | 'stats';
 
 export default function CommunityPage({ params }: { params: Promise<{ slug: string }> }) {
     const { data: session } = useSession();
-    const [slug, setSlug] = useState<string>('');
     const [community, setCommunity] = useState<Community | null>(null);
     const [events, setEvents] = useState<Event[]>([]);
     const [presales, setPresales] = useState<Presale[]>([]);
@@ -104,7 +103,6 @@ export default function CommunityPage({ params }: { params: Promise<{ slug: stri
 
     useEffect(() => {
         params.then(p => {
-            setSlug(p.slug);
             loadCommunityData(p.slug);
         });
     }, [params]);

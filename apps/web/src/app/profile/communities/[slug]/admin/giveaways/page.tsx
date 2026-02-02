@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Edit2, Trash2, Eye, Clock, Users, Gift } from 'lucide-react';
+import { Edit2, Trash2, Eye, Clock, Users, Gift } from 'lucide-react';
 
 interface EventData {
     id: string;
@@ -22,7 +22,6 @@ interface EventData {
 
 export default function AdminGiveawaysPage({ params }: { params: Promise<{ slug: string }> }) {
     const [slug, setSlug] = useState<string>('');
-    const [communityId, setCommunityId] = useState<string>('');
     const [giveaways, setGiveaways] = useState<EventData[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'active' | 'closed' | 'draft'>('active');
@@ -42,7 +41,6 @@ export default function AdminGiveawaysPage({ params }: { params: Promise<{ slug:
             const communityRes = await fetch(`/api/communities?slug=${communitySlug}`);
             if (!communityRes.ok) throw new Error('Community not found');
             const community = await communityRes.json();
-            setCommunityId(community.id);
 
             const eventsRes = await fetch(`/api/events?communityId=${community.id}&type=GIVEAWAY`);
             if (!eventsRes.ok) throw new Error('Failed to load giveaways');
