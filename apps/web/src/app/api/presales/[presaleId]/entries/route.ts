@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireCommunityAdmin } from '@/lib/auth/middleware';
+import { ApiError } from '@/lib/api-utils';
 import { z } from 'zod';
 
 const createPresaleEntrySchema = z.object({
@@ -113,11 +114,26 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pre
             { status: 201 },
         );
     } catch (error) {
-        console.error('Error creating presale entry:', error);
+        console.error('[API Error] POST /api/presales/[presaleId]/entries:', error);
+        
         if (error instanceof z.ZodError) {
-            return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
+            return NextResponse.json(
+                { error: 'VALIDATION_ERROR', issues: error.issues },
+                { status: 400 }
+            );
         }
-        return NextResponse.json({ error: 'Failed to create entry' }, { status: 500 });
+        
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { error: error.code, message: error.message },
+                { status: error.statusCode }
+            );
+        }
+
+        return NextResponse.json(
+            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to create entry' },
+            { status: 500 }
+        );
     }
 }
 
@@ -175,7 +191,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pre
 
         return NextResponse.json(transformed);
     } catch (error) {
-        console.error('Error fetching entries:', error);
-        return NextResponse.json({ error: 'Failed to fetch entries' }, { status: 500 });
+        console.error('[API Error] GET /api/presales/[presaleId]/entries:', error);
+        
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { error: error.code, message: error.message },
+                { status: error.statusCode }
+            );
+        }
+
+        return NextResponse.json(
+            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch entries' },
+            { status: 500 }
+        );
     }
 }

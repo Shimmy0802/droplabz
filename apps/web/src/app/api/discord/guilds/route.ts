@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import { ApiError } from '@/lib/api-utils';
 
 interface DiscordGuild {
     id: string;
@@ -61,7 +62,18 @@ export async function GET() {
             })),
         });
     } catch (error) {
-        console.error('Error fetching Discord guilds:', error);
-        return NextResponse.json({ error: 'Failed to fetch Discord guilds' }, { status: 500 });
+        console.error('[API Error] GET /api/discord/guilds:', error);
+        
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { error: error.code, message: error.message },
+                { status: error.statusCode }
+            );
+        }
+
+        return NextResponse.json(
+            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch Discord guilds' },
+            { status: 500 }
+        );
     }
 }
