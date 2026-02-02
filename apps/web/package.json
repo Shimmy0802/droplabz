@@ -13,7 +13,8 @@
         "type-check": "tsc --noEmit",
         "db:push": "prisma db push",
         "db:studio": "prisma studio",
-        "db:migrate": "prisma migrate dev"
+        "db:migrate": "prisma migrate dev",
+        "postinstall": "prisma generate"
     },
     "dependencies": {
         "@prisma/client": "^5.22.0",
@@ -40,7 +41,6 @@
     "devDependencies": {
         "@solana/prettier-config-solana": "^0.0.6",
         "@tailwindcss/postcss": "^4.1.18",
-        "@types/bcryptjs": "^3.0.0",
         "@types/node": "^25.0.10",
         "@types/react": "^19.2.9",
         "@types/react-dom": "^19.2.3",
