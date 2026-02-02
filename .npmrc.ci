@@ -1,0 +1,17 @@
+# pnpm CI/CD specific configuration for Vercel and other CI environments
+# This file is used when PNPM_HOME environment variable is set
+
+# Disable store verification for faster CI builds
+# verify-store-integrity=false
+
+# Reduce network calls
+prefer-offline=true
+
+# Extend timeouts for unreliable networks
+fetch-timeout=120000
+fetch-retry-mintimeout=20000
+fetch-retry-maxtimeout=120000
+fetch-retries=3
+
+# Disable workspace protocol checks in CI (can be slow)
+# workspace-protocol=false
