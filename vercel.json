@@ -5,6 +5,7 @@
   "outputDirectory": "apps/web/.next",
   "env": {
     "PNPM_HOME": "/root/.pnpm",
-    "NODE_OPTIONS": "--max-old-space-size=4096"
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "PRISMA_SCHEMA_ENGINE": "apps/web/prisma/schema.prisma"
   }
 }
