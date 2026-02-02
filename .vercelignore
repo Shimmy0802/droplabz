@@ -4,5 +4,6 @@ packages/sdk
 docs
 .git
 .github
-pnpm-lock.yaml
+# IMPORTANT: Do NOT ignore pnpm-lock.yaml - let Vercel use it for lockfile fallback
+# .vercelignore: pnpm-lock.yaml - REMOVED to enable registry failover
 *.md

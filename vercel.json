@@ -1,10 +1,17 @@
 {
   "buildCommand": "cd apps/web && pnpm build",
   "devCommand": "cd apps/web && pnpm dev",
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": "nextjs",
   "outputDirectory": "apps/web/.next",
   "env": {
-    "PNPM_HOME": "/root/.pnpm"
-  }
+    "PNPM_HOME": "/root/.pnpm",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  },
+  "builds": [
+    {
+      "src": "apps/web/next.config.js",
+      "use": "@vercel/next"
+    }
+  ]
 }
