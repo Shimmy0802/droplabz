@@ -1,0 +1,8 @@
+apps/bot
+programs
+packages/sdk
+docs
+.git
+.github
+pnpm-lock.yaml
+*.md
