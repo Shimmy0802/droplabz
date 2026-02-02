@@ -1,10 +1,11 @@
 import { db } from '@/lib/db';
 import { createEntrySchema } from '@/lib/validation';
-import { apiResponse, apiError, ApiError } from '@/lib/api-utils';
+import { apiResponse, ApiError } from '@/lib/api-utils';
 import { validateSolanaAddress } from '@/lib/solana/verification';
 import { getCurrentUserId } from '@/lib/auth/session';
 import { verifyAndUpdateEntry } from '@/lib/verification/entry-verifier';
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 
 export async function POST(request: NextRequest) {
     try {
@@ -114,12 +115,30 @@ export async function POST(request: NextRequest) {
             201,
         );
     } catch (error) {
-        console.error('Entry creation error:', error);
-        if (error instanceof Error) {
-            console.error('Error message:', error.message);
-            console.error('Error stack:', error.stack);
+        console.error('[API Error] POST /api/entries:', error);
+        
+        if (error instanceof z.ZodError) {
+            return apiResponse(
+                { error: 'VALIDATION_ERROR', issues: error.issues },
+                400
+            );
         }
-        return apiError(error);
+        
+        if (error instanceof ApiError) {
+            return apiResponse(
+                { error: error.code, message: error.message },
+                error.statusCode
+            );
+        }
+
+        if (error instanceof Error) {
+            console.error('Error details:', error.message, error.stack);
+        }
+        
+        return apiResponse(
+            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to create entry' },
+            500
+        );
     }
 }
 
@@ -157,6 +176,18 @@ export async function GET(request: NextRequest) {
 
         return apiResponse(entries);
     } catch (error) {
-        return apiError(error);
+        console.error('[API Error] GET /api/entries:', error);
+        
+        if (error instanceof ApiError) {
+            return apiResponse(
+                { error: error.code, message: error.message },
+                error.statusCode
+            );
+        }
+
+        return apiResponse(
+            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch entries' },
+            500
+        );
     }
 }

@@ -9,6 +9,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { verifyDiscordRequirements } from '@/lib/verification/discord';
 import { verifySolanaRequirements } from '@/lib/verification/solana';
+import { ApiError } from '@/lib/api-utils';
 
 /**
  * POST /api/entries/[entryId]/verify
@@ -70,13 +71,22 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ en
 
         return NextResponse.json(verificationResult);
     } catch (error) {
-        console.error('Error verifying entry:', error);
+        console.error('[API Error] POST /api/entries/[entryId]/verify:', error);
+        
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { error: error.code, message: error.message },
+                { status: error.statusCode }
+            );
+        }
+
         return NextResponse.json(
             {
-                error: 'Failed to verify entry',
+                error: 'INTERNAL_SERVER_ERROR',
+                message: 'Failed to verify entry',
                 details: error instanceof Error ? error.message : 'Unknown error',
             },
-            { status: 500 },
+            { status: 500 }
         );
     }
 }
