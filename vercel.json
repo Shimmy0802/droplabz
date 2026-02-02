@@ -8,4 +8,4 @@
     "PNPM_HOME": ".pnpm",
     "PATH": "$PNPM_HOME:$PATH"
   }
-
+}
