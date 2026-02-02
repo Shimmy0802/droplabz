@@ -6,10 +6,5 @@
   "outputDirectory": "apps/web/.next",
   "env": {
     "PNPM_HOME": "/root/.pnpm"
-  },
-  "functions": {
-    "api/**": {
-      "maxDuration": 30
-    }
   }
 }
