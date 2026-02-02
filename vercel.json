@@ -1,17 +1,12 @@
 {
-  "buildCommand": "cd apps/web && pnpm build",
+  "buildCommand": "pnpm install --no-frozen-lockfile && cd apps/web && npx prisma generate && pnpm build",
   "devCommand": "cd apps/web && pnpm dev",
   "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": "nextjs",
-  "outputDirectory": "apps/web/.next",
+  "root": "apps/web",
+  "outputDirectory": ".next",
   "env": {
     "PNPM_HOME": "/root/.pnpm",
     "NODE_OPTIONS": "--max-old-space-size=4096"
-  },
-  "builds": [
-    {
-      "src": "apps/web/next.config.js",
-      "use": "@vercel/next"
-    }
-  ]
+  }
 }
