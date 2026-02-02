@@ -42,3 +42,5 @@ logs/
 .turbo/
 # Uploads (local file storage)
 apps/web/public/uploads/
+.vercel
+.env*.local

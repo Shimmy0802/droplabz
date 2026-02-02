@@ -1,14 +1,6 @@
 {
-    "buildCommand": "pnpm build -F web",
-    "devCommand": "pnpm dev",
-    "installCommand": "pnpm install",
-    "framework": "nextjs",
-    "outputDirectory": "apps/web/.next",
-    "cleanUrls": true,
-    "trailingSlash": false,
-    "build": {
-        "env": {
-            "SKIP_ENV_VALIDATION": "1"
-        }
-    }
+  "buildCommand": "cd apps/web && pnpm build",
+  "devCommand": "cd apps/web && pnpm dev",
+  "installCommand": "pnpm install",
+  "framework": "nextjs"
 }
