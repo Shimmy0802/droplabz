@@ -3,8 +3,7 @@
   "devCommand": "cd apps/web && pnpm dev",
   "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": "nextjs",
-  "root": "apps/web",
-  "outputDirectory": ".next",
+  "outputDirectory": "apps/web/.next",
   "env": {
     "PNPM_HOME": "/root/.pnpm",
     "NODE_OPTIONS": "--max-old-space-size=4096"
