@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireCommunityAdmin } from '@/lib/auth/middleware';
 import { db } from '@/lib/db';
+import { ApiError } from '@/lib/api-utils';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 
@@ -70,11 +71,26 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(presale, { status: 201 });
     } catch (error) {
-        console.error('Error creating presale:', error);
+        console.error('[API Error] POST /api/presales:', error);
+        
         if (error instanceof z.ZodError) {
-            return NextResponse.json({ error: 'Invalid request data', issues: error.issues }, { status: 400 });
+            return NextResponse.json(
+                { error: 'VALIDATION_ERROR', issues: error.issues },
+                { status: 400 }
+            );
         }
-        return NextResponse.json({ error: 'Failed to create presale' }, { status: 500 });
+        
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { error: error.code, message: error.message },
+                { status: error.statusCode }
+            );
+        }
+
+        return NextResponse.json(
+            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to create presale' },
+            { status: 500 }
+        );
     }
 }
 
@@ -119,7 +135,18 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json(presales);
     } catch (error) {
-        console.error('Error fetching presales:', error);
-        return NextResponse.json({ error: 'Failed to fetch presales' }, { status: 500 });
+        console.error('[API Error] GET /api/presales:', error);
+        
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { error: error.code, message: error.message },
+                { status: error.statusCode }
+            );
+        }
+
+        return NextResponse.json(
+            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch presales' },
+            { status: 500 }
+        );
     }
 }

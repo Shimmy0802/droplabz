@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, getCurrentUser } from '@/lib/auth/middleware';
 import { db } from '@/lib/db';
+import { ApiError } from '@/lib/api-utils';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 
@@ -108,11 +109,26 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(event);
     } catch (error) {
-        console.error('Error creating event:', error);
+        console.error('[API Error] POST /api/events:', error);
+        
         if (error instanceof z.ZodError) {
-            return NextResponse.json({ error: 'Invalid request data', issues: error.issues }, { status: 400 });
+            return NextResponse.json(
+                { error: 'VALIDATION_ERROR', issues: error.issues },
+                { status: 400 }
+            );
         }
-        return NextResponse.json({ error: 'Failed to create event' }, { status: 500 });
+        
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { error: error.code, message: error.message },
+                { status: error.statusCode }
+            );
+        }
+
+        return NextResponse.json(
+            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to create event' },
+            { status: 500 }
+        );
     }
 }
 
@@ -170,7 +186,18 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json(events);
     } catch (error) {
-        console.error('Error fetching events:', error);
-        return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 });
+        console.error('[API Error] GET /api/events:', error);
+        
+        if (error instanceof ApiError) {
+            return NextResponse.json(
+                { error: error.code, message: error.message },
+                { status: error.statusCode }
+            );
+        }
+
+        return NextResponse.json(
+            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch events' },
+            { status: 500 }
+        );
     }
 }
