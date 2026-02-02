@@ -5,7 +5,7 @@
     "description": "Solana-native, multi-tenant community operations platform",
     "packageManager": "pnpm@9.15.9",
     "engines": {
-        "node": ">=22.0.0"
+        "node": "22.x"
     },
     "scripts": {
         "dev": "pnpm -r --parallel dev",
