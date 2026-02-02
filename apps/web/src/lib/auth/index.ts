@@ -2,11 +2,14 @@ import NextAuth from 'next-auth';
 import { authConfig } from './config';
 
 /**
- * NextAuth v5 instance
+ * NextAuth v4 instance
  * Export handlers and utility functions
  */
 
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+const handler = NextAuth(authConfig);
+
+export const { auth, signIn, signOut } = NextAuth(authConfig);
+export { handler as GET, handler as POST };
 
 /**
  * Re-export types for convenience

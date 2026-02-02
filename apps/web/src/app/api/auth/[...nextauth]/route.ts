@@ -1,8 +1,8 @@
-import { handlers } from '@/lib/auth';
+import { GET, POST } from '@/lib/auth';
 
 /**
- * NextAuth v5 API route handlers
+ * NextAuth v4 API route handlers
  * Handles all authentication routes: /api/auth/*
  */
 
-export const { GET, POST } = handlers;
+export { GET, POST };

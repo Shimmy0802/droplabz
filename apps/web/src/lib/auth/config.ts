@@ -1,12 +1,12 @@
-import { NextAuthConfig } from 'next-auth';
-import Credentials from 'next-auth/providers/credentials';
-import Discord from 'next-auth/providers/discord';
+import type { NextAuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import DiscordProvider from 'next-auth/providers/discord';
 import { db } from '@/lib/db';
 import { compare } from 'bcryptjs';
 import { z } from 'zod';
 
 /**
- * NextAuth v5 configuration
+ * NextAuth v4 configuration
  * Supports multiple authentication methods:
  * - Email/password (Credentials provider)
  * - Discord OAuth (Discord provider)
@@ -17,9 +17,9 @@ const credentialsSchema = z.object({
     password: z.string().min(8),
 });
 
-export const authConfig: NextAuthConfig = {
+export const authConfig: NextAuthOptions = {
     providers: [
-        Credentials({
+        CredentialsProvider({
             id: 'credentials',
             name: 'Email and Password',
             credentials: {
@@ -64,7 +64,7 @@ export const authConfig: NextAuthConfig = {
                 }
             },
         }),
-        Discord({
+        DiscordProvider({
             clientId: process.env.DISCORD_CLIENT_ID!,
             clientSecret: process.env.DISCORD_CLIENT_SECRET!,
             authorization: {
@@ -83,7 +83,7 @@ export const authConfig: NextAuthConfig = {
         error: '/auth/error',
     },
     callbacks: {
-        async signIn({ user, account, profile }) {
+        async signIn({ user, account, profile }: any) {
             // Handle Discord OAuth login/registration
             if (account?.provider === 'discord' && profile) {
                 try {

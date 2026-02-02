@@ -1,8 +1,5 @@
 import type { Metadata } from 'next';
-import { WalletContextProvider } from '@/lib/wallet';
-import { SessionProvider } from 'next-auth/react';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import { RootLayoutClient } from '@/components/RootLayoutClient';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -31,15 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     backgroundBlendMode: 'soft-light',
                 }}
             >
-                <SessionProvider>
-                    <WalletContextProvider>
-                        <div className="min-h-screen flex flex-col">
-                            <Header />
-                            <main className="flex-1">{children}</main>
-                            <Footer />
-                        </div>
-                    </WalletContextProvider>
-                </SessionProvider>
+                <RootLayoutClient>{children}</RootLayoutClient>
             </body>
         </html>
     );

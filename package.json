@@ -21,13 +21,13 @@
     "prettier": "@solana/prettier-config-solana",
     "devDependencies": {
         "@types/node": "^25.2.0",
-        "typescript": "^5.4.0",
+        "typescript": "^5.9.3",
         "prettier": "^3.8.1",
         "@solana/prettier-config-solana": "^0.0.6"
     },
     "pnpm": {
         "overrides": {
-            "typescript": "^5.4.0"
+            "typescript": "^5.9.3"
         },
         "lockfileSettings": {
             "autoInstallPeers": true,
