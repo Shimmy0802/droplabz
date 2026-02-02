@@ -5,7 +5,6 @@
   "framework": "nextjs",
   "outputDirectory": "apps/web/.next",
   "env": {
-    "PNPM_HOME": ".pnpm",
-    "PATH": "$PNPM_HOME:$PATH"
+    "PNPM_HOME": ".pnpm"
   }
 }
