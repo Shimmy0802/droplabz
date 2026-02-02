@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Build announcement data for bot
-        const announcementData = buildAnnouncementData(event, communityId);
+        const announcementData = buildAnnouncementData(event);
 
         // Call bot API to post announcement
         const botResponse = await fetch(
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
 /**
  * Convert event database record to announcement data for bot
  */
-function buildAnnouncementData(event: any, communityId: string) {
+function buildAnnouncementData(event: any) {
     // Parse community socials
     const links = event.community.socials || {};
 
