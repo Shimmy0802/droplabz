@@ -1,7 +1,19 @@
 {
   "buildCommand": "cd apps/web && pnpm build",
   "devCommand": "cd apps/web && pnpm dev",
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --frozen-lockfile",
   "framework": "nextjs",
-  "outputDirectory": "apps/web/.next"
+  "outputDirectory": "apps/web/.next",
+  "env": {
+    "PNPM_HOME": "/root/.pnpm"
+  },
+  "functions": {
+    "api/**": {
+      "maxDuration": 30
+    }
+  },
+  "crons": [],
+  "buildSettings": {
+    "skipBuild": false
+  }
 }
