@@ -1,7 +1,9 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -18,7 +20,7 @@ interface Community {
     };
 }
 
-export default function CommunitiesPage() {
+function CommunitiesPageContent() {
     const { status } = useSession();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -145,5 +147,13 @@ export default function CommunitiesPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function CommunitiesPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <CommunitiesPageContent />
+        </Suspense>
     );
 }
