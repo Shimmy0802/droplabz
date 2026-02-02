@@ -1,9 +1,10 @@
 {
-  "buildCommand": "cd apps/web && pnpm build",
-  "devCommand": "cd apps/web && pnpm dev",
+  "rootDirectory": "apps/web",
+  "buildCommand": "pnpm build",
+  "devCommand": "pnpm dev",
   "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
   "framework": "nextjs",
-  "outputDirectory": "apps/web/.next",
+  "outputDirectory": ".next",
   "env": {
     "PNPM_HOME": "/root/.pnpm",
     "NODE_OPTIONS": "--max-old-space-size=4096"
