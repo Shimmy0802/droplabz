@@ -1,7 +1,9 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useProfileSettingsState } from '@/hooks/useProfileSettingsState';
+import type { ModalState } from '@/hooks/useProfileSettingsState';
 
 /**
  * Obscures an email address for privacy
@@ -14,32 +16,28 @@ function obscureEmail(email: string): string {
     return `${local[0]}${'*'.repeat(Math.min(local.length - 1, 3))}@${domain}`;
 }
 
-interface ModalState {
-    type: 'alert' | 'confirm';
-    title: string;
-    message: string;
-    icon?: 'success' | 'error' | 'warning' | 'info';
-    onConfirm?: () => void;
-    onCancel?: () => void;
-}
-
 export default function ProfileSettings() {
     const { data: session, status, update } = useSession();
-    const [username, setUsername] = useState(session?.user?.username || '');
-    const [discordUsername, setDiscordUsername] = useState<string | null>(null);
-    const [hasPassword, setHasPassword] = useState(false);
-    const [isEditingUsername, setIsEditingUsername] = useState(false);
-    const [isEditingEmail, setIsEditingEmail] = useState(false);
-    const [isEditingPassword, setIsEditingPassword] = useState(false);
-    const [newEmail, setNewEmail] = useState('');
-    const [currentPassword, setCurrentPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [modal, setModal] = useState<ModalState | null>(null);
-    const [loading, setLoading] = useState(false);
+    const { state, dispatch } = useProfileSettingsState();
+    const {
+        username,
+        discordUsername,
+        hasPassword,
+        isEditingUsername,
+        isEditingEmail,
+        isEditingPassword,
+        newEmail,
+        currentPassword,
+        newPassword,
+        confirmPassword,
+        modal,
+        loading,
+    } = state;
 
-    const showModal = (config: ModalState) => setModal(config);
-    const closeModal = () => setModal(null);
+    const showModal = (config: ModalState) => {
+        dispatch({ type: 'SET_MODAL', payload: config });
+    };
+    const closeModal = () => dispatch({ type: 'CLEAR_MODAL' });
 
     // Fetch Discord username if user is linked to Discord
     useEffect(() => {
@@ -48,15 +46,19 @@ export default function ProfileSettings() {
                 .then(res => res.json())
                 .then(data => {
                     if (data.user?.discordUsername) {
-                        setDiscordUsername(data.user.discordUsername);
+                        dispatch({ type: 'SET_DISCORD_USERNAME', payload: data.user.discordUsername });
                     }
                     if (typeof data.user?.hasPassword === 'boolean') {
-                        setHasPassword(data.user.hasPassword);
+                        dispatch({ type: 'SET_HAS_PASSWORD', payload: data.user.hasPassword });
                     }
                 })
                 .catch(err => console.error('Failed to fetch user profile:', err));
         }
-    }, [session]);
+    }, [dispatch, session]);
+
+    useEffect(() => {
+        dispatch({ type: 'SYNC_USERNAME', payload: session?.user?.username || '' });
+    }, [dispatch, session?.user?.username]);
 
     const handleDisconnectDiscord = async () => {
         showModal({
@@ -67,7 +69,7 @@ export default function ProfileSettings() {
             icon: 'warning',
             onConfirm: async () => {
                 closeModal();
-                setLoading(true);
+                dispatch({ type: 'SET_LOADING', payload: true });
                 try {
                     const res = await fetch('/api/users/me/discord', {
                         method: 'DELETE',
@@ -89,7 +91,7 @@ export default function ProfileSettings() {
                     await update();
 
                     // Clear Discord username state
-                    setDiscordUsername(null);
+                    dispatch({ type: 'SET_DISCORD_USERNAME', payload: null });
 
                     showModal({
                         type: 'alert',
@@ -105,7 +107,7 @@ export default function ProfileSettings() {
                         icon: 'error',
                     });
                 } finally {
-                    setLoading(false);
+                    dispatch({ type: 'SET_LOADING', payload: false });
                 }
             },
             onCancel: closeModal,
@@ -124,11 +126,11 @@ export default function ProfileSettings() {
         }
 
         if (username === session?.user?.username) {
-            setIsEditingUsername(false);
+            dispatch({ type: 'STOP_EDIT_USERNAME' });
             return;
         }
 
-        setLoading(true);
+        dispatch({ type: 'SET_LOADING', payload: true });
         try {
             const res = await fetch('/api/users/me/username', {
                 method: 'PUT',
@@ -157,7 +159,7 @@ export default function ProfileSettings() {
                 message: 'Username updated successfully',
                 icon: 'success',
             });
-            setIsEditingUsername(false);
+            dispatch({ type: 'STOP_EDIT_USERNAME' });
         } catch (error) {
             showModal({
                 type: 'alert',
@@ -166,7 +168,7 @@ export default function ProfileSettings() {
                 icon: 'error',
             });
         } finally {
-            setLoading(false);
+            dispatch({ type: 'SET_LOADING', payload: false });
         }
     };
 
@@ -181,7 +183,7 @@ export default function ProfileSettings() {
             return;
         }
 
-        setLoading(true);
+        dispatch({ type: 'SET_LOADING', payload: true });
         try {
             const res = await fetch('/api/users/me/email', {
                 method: 'PUT',
@@ -210,8 +212,8 @@ export default function ProfileSettings() {
                 message: data.message || 'Email updated successfully',
                 icon: 'success',
             });
-            setIsEditingEmail(false);
-            setNewEmail('');
+            dispatch({ type: 'STOP_EDIT_EMAIL' });
+            dispatch({ type: 'RESET_EMAIL_FIELDS' });
         } catch (error) {
             showModal({
                 type: 'alert',
@@ -220,7 +222,7 @@ export default function ProfileSettings() {
                 icon: 'error',
             });
         } finally {
-            setLoading(false);
+            dispatch({ type: 'SET_LOADING', payload: false });
         }
     };
 
@@ -245,7 +247,7 @@ export default function ProfileSettings() {
             return;
         }
 
-        setLoading(true);
+        dispatch({ type: 'SET_LOADING', payload: true });
         try {
             const res = await fetch('/api/users/me/password', {
                 method: 'PUT',
@@ -277,11 +279,9 @@ export default function ProfileSettings() {
                 message: data.message || 'Password updated successfully',
                 icon: 'success',
             });
-            setIsEditingPassword(false);
-            setCurrentPassword('');
-            setNewPassword('');
-            setConfirmPassword('');
-            setHasPassword(true);
+            dispatch({ type: 'STOP_EDIT_PASSWORD' });
+            dispatch({ type: 'RESET_PASSWORD_FIELDS' });
+            dispatch({ type: 'SET_HAS_PASSWORD', payload: true });
         } catch (error) {
             showModal({
                 type: 'alert',
@@ -290,7 +290,7 @@ export default function ProfileSettings() {
                 icon: 'error',
             });
         } finally {
-            setLoading(false);
+            dispatch({ type: 'SET_LOADING', payload: false });
         }
     };
 
@@ -329,7 +329,7 @@ export default function ProfileSettings() {
                                 <input
                                     type="text"
                                     value={username}
-                                    onChange={e => setUsername(e.target.value)}
+                                    onChange={e => dispatch({ type: 'SET_USERNAME', payload: e.target.value })}
                                     readOnly={!isEditingUsername}
                                     className={`flex-1 px-4 py-3 rounded-lg bg-[#111528] border border-[rgba(0,212,255,0.2)] text-white focus:border-[#00d4ff] focus:outline-none ${!isEditingUsername ? 'cursor-not-allowed' : ''}`}
                                 />
@@ -344,8 +344,11 @@ export default function ProfileSettings() {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                setUsername(session?.user?.username || '');
-                                                setIsEditingUsername(false);
+                                                dispatch({
+                                                    type: 'SYNC_USERNAME',
+                                                    payload: session?.user?.username || '',
+                                                });
+                                                dispatch({ type: 'STOP_EDIT_USERNAME' });
                                             }}
                                             disabled={loading}
                                             className="px-4 py-3 rounded-lg text-sm border border-gray-600 text-gray-400 hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
@@ -355,7 +358,7 @@ export default function ProfileSettings() {
                                     </div>
                                 ) : (
                                     <button
-                                        onClick={() => setIsEditingUsername(true)}
+                                        onClick={() => dispatch({ type: 'START_EDIT_USERNAME' })}
                                         className="px-4 py-3 rounded-lg text-sm border border-[#00d4ff] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.1)] transition"
                                     >
                                         Change
@@ -375,7 +378,7 @@ export default function ProfileSettings() {
                                     <input
                                         type="email"
                                         value={newEmail}
-                                        onChange={e => setNewEmail(e.target.value)}
+                                        onChange={e => dispatch({ type: 'SET_NEW_EMAIL', payload: e.target.value })}
                                         placeholder="Enter new email address"
                                         className="w-full px-4 py-3 rounded-lg bg-[#111528] border border-[rgba(0,212,255,0.2)] text-white focus:border-[#00d4ff] focus:outline-none"
                                     />
@@ -389,8 +392,8 @@ export default function ProfileSettings() {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                setNewEmail('');
-                                                setIsEditingEmail(false);
+                                                dispatch({ type: 'RESET_EMAIL_FIELDS' });
+                                                dispatch({ type: 'STOP_EDIT_EMAIL' });
                                             }}
                                             disabled={loading}
                                             className="px-4 py-3 rounded-lg text-sm border border-gray-600 text-gray-400 hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
@@ -408,7 +411,7 @@ export default function ProfileSettings() {
                                         className="flex-1 px-4 py-3 rounded-lg bg-[#111528] border border-[rgba(0,212,255,0.2)] text-gray-400 cursor-not-allowed"
                                     />
                                     <button
-                                        onClick={() => setIsEditingEmail(true)}
+                                        onClick={() => dispatch({ type: 'START_EDIT_EMAIL' })}
                                         className="px-4 py-3 rounded-lg text-sm border border-[#00d4ff] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.1)] transition"
                                     >
                                         {session?.user?.email ? 'Change' : 'Add Email'}
@@ -431,7 +434,9 @@ export default function ProfileSettings() {
                                         <input
                                             type="password"
                                             value={currentPassword}
-                                            onChange={e => setCurrentPassword(e.target.value)}
+                                            onChange={e =>
+                                                dispatch({ type: 'SET_CURRENT_PASSWORD', payload: e.target.value })
+                                            }
                                             placeholder="Current password"
                                             className="w-full px-4 py-3 rounded-lg bg-[#111528] border border-[rgba(0,212,255,0.2)] text-white focus:border-[#00d4ff] focus:outline-none"
                                         />
@@ -439,14 +444,16 @@ export default function ProfileSettings() {
                                     <input
                                         type="password"
                                         value={newPassword}
-                                        onChange={e => setNewPassword(e.target.value)}
+                                        onChange={e => dispatch({ type: 'SET_NEW_PASSWORD', payload: e.target.value })}
                                         placeholder="New password"
                                         className="w-full px-4 py-3 rounded-lg bg-[#111528] border border-[rgba(0,212,255,0.2)] text-white focus:border-[#00d4ff] focus:outline-none"
                                     />
                                     <input
                                         type="password"
                                         value={confirmPassword}
-                                        onChange={e => setConfirmPassword(e.target.value)}
+                                        onChange={e =>
+                                            dispatch({ type: 'SET_CONFIRM_PASSWORD', payload: e.target.value })
+                                        }
                                         placeholder="Confirm new password"
                                         className="w-full px-4 py-3 rounded-lg bg-[#111528] border border-[rgba(0,212,255,0.2)] text-white focus:border-[#00d4ff] focus:outline-none"
                                     />
@@ -463,10 +470,8 @@ export default function ProfileSettings() {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                setCurrentPassword('');
-                                                setNewPassword('');
-                                                setConfirmPassword('');
-                                                setIsEditingPassword(false);
+                                                dispatch({ type: 'RESET_PASSWORD_FIELDS' });
+                                                dispatch({ type: 'STOP_EDIT_PASSWORD' });
                                             }}
                                             disabled={loading}
                                             className="px-4 py-3 rounded-lg text-sm border border-gray-600 text-gray-400 hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
@@ -478,7 +483,7 @@ export default function ProfileSettings() {
                             ) : (
                                 <>
                                     <button
-                                        onClick={() => setIsEditingPassword(true)}
+                                        onClick={() => dispatch({ type: 'START_EDIT_PASSWORD' })}
                                         className="px-4 py-3 rounded-lg text-sm border border-[#00d4ff] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.1)] transition"
                                     >
                                         {hasPassword ? 'Change Password' : 'Set Password'}

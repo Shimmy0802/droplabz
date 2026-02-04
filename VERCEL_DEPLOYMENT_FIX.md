@@ -3,6 +3,7 @@
 ## Problem: ERR_INVALID_THIS Errors
 
 **Root Causes**:
+
 1. Yarn registry (registry.yarnpkg.com) has compatibility issues with pnpm in Vercel's ephemeral environment
 2. pnpm 9.0.0 has a known bug with the 'in' operator in timeout handling
 3. Missing explicit pnpm configuration for CI/CD environments
@@ -16,6 +17,7 @@
 **Changed to**: `registry=https://registry.npmjs.org/`
 
 **Why npm registry is more reliable for CI/CD**:
+
 - npm registry is the canonical source for npm packages
 - Better tested with CI/CD tools like Vercel
 - Yarn registry optimizations don't benefit pnpm
@@ -28,6 +30,7 @@
 **Changed to**: `pnpm@9.1.3`
 
 **Why 9.1.3**:
+
 - 9.0.0 has a bug in timeout error handling (ERR_INVALID_THIS)
 - 9.1.3 has fixes for this and other stability issues
 - Still part of the 9.x series to maintain compatibility
@@ -53,6 +56,7 @@ store-dir=.pnpm-store             # Central store location
 ```
 
 **Timeout logic**:
+
 - First attempt: fails after 120s
 - Retry 1: waits 20s, tries again (20s window)
 - Retry 2: waits 20-120s exponential, tries again
@@ -65,22 +69,24 @@ store-dir=.pnpm-store             # Central store location
 
 ```json
 {
-  "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm install --frozen-lockfile && cd apps/web && pnpm build",
-  "env": {
-    "PNPM_HOME": ".pnpm",
-    "PATH": "$PNPM_HOME:$PATH"
-  }
+    "installCommand": "pnpm install --frozen-lockfile",
+    "buildCommand": "pnpm install --frozen-lockfile && cd apps/web && pnpm build",
+    "env": {
+        "PNPM_HOME": ".pnpm",
+        "PATH": "$PNPM_HOME:$PATH"
+    }
 }
 ```
 
 **Why `--frozen-lockfile`**:
+
 - Ensures pnpm-lock.yaml is respected exactly
 - Prevents version mismatches in CI
 - Faster builds (no dependency resolution)
 - Critical for monorepos to prevent drift between branches
 
 **Why explicit PATH**:
+
 - Ensures Vercel uses the correct pnpm binary
 - `.pnpm` directory added to PATH
 - Prevents fallback to system pnpm
@@ -101,27 +107,29 @@ pnpm install --frozen-lockfile && cd apps/web && pnpm build
 ## Vercel Deployment Steps
 
 1. **Update root package.json**:
-   - Verify `packageManager: "pnpm@9.1.3"`
+    - Verify `packageManager: "pnpm@9.1.3"`
 
 2. **Commit changes**:
-   ```bash
-   git add .npmrc vercel.json package.json
-   git commit -m "fix: update pnpm registry and versions for Vercel stability"
-   git push
-   ```
+
+    ```bash
+    git add .npmrc vercel.json package.json
+    git commit -m "fix: update pnpm registry and versions for Vercel stability"
+    git push
+    ```
 
 3. **Clear Vercel cache**:
-   - Go to Project Settings → Git
-   - Click "Clear Build Cache"
-   - Or redeploy from git
+    - Go to Project Settings → Git
+    - Click "Clear Build Cache"
+    - Or redeploy from git
 
 4. **Redeploy**:
-   - Vercel will auto-deploy on push
-   - Monitor build logs for success
+    - Vercel will auto-deploy on push
+    - Monitor build logs for success
 
 ## Troubleshooting Build Failures
 
 ### If still seeing ERR_INVALID_THIS:
+
 ```bash
 # Clear local node_modules
 rm -rf node_modules
@@ -133,15 +141,17 @@ pnpm install
 ```
 
 ### If timeout errors persist:
+
 - Increase `fetch-timeout` in .npmrc to 180000 (3 minutes)
 - Reduce `fetch-retries` to 2 if network is very unstable
 - Contact Vercel support for network issues
 
 ### If specific packages fail to install:
+
 - Check pnpm-lock.yaml is not corrupted:
-  ```bash
-  pnpm install --force
-  ```
+    ```bash
+    pnpm install --force
+    ```
 - Update lock file and recommit
 
 ## Alternative: Emergency Fallback

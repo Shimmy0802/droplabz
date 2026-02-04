@@ -69,17 +69,17 @@ git push origin main
 
 1. Go to https://vercel.com → Select DropLabz project
 2. Monitor build logs - should see:
-   - `pnpm install` using Yarn registry
-   - No ERR_INVALID_THIS errors (if npm.org is still failing, Yarn registry will be used)
-   - Successful build completion
+    - `pnpm install` using Yarn registry
+    - No ERR_INVALID_THIS errors (if npm.org is still failing, Yarn registry will be used)
+    - Successful build completion
 
 3. Expected changes in logs:
-   ```
-   > pnpm install
-   Resolving: registry.yarnpkg.com
-   [package 1/N] resolve ...
-   [package N/N] installed
-   ```
+    ```
+    > pnpm install
+    Resolving: registry.yarnpkg.com
+    [package 1/N] resolve ...
+    [package N/N] installed
+    ```
 
 ## Fallback Plan (If Yarn Registry Also Fails)
 
@@ -139,10 +139,10 @@ If deployment still fails after these changes:
 
 1. Check Vercel build logs for specific error messages
 2. Verify all files were committed:
-   ```bash
-   git log --oneline -1  # Should show commit with .npmrc changes
-   git show HEAD -- .npmrc | head -20
-   ```
+    ```bash
+    git log --oneline -1  # Should show commit with .npmrc changes
+    git show HEAD -- .npmrc | head -20
+    ```
 3. Clear Vercel build cache: Vercel Dashboard → Settings → Advanced → Clear Build Cache
 4. Try re-triggering deployment
 

@@ -79,10 +79,33 @@ export const authConfig: NextAuthOptions = {
         maxAge: 30 * 24 * 60 * 60, // 30 days
     },
     pages: {
-        signIn: '/auth/signin',
+        signIn: '/login',
         error: '/auth/error',
     },
     callbacks: {
+        async redirect({ url, baseUrl }) {
+            console.log('[NextAuth Redirect]', { url, baseUrl });
+
+            // Always redirect to /profile after successful login (unless explicitly requesting a different path)
+            // This handles OAuth (Discord) redirects which would otherwise go to /login
+            if (url === '/' || url === '/login' || url === `${baseUrl}/login`) {
+                console.log('[NextAuth Redirect] Redirecting to /profile (post-auth)');
+                return `${baseUrl}/profile`;
+            }
+
+            // Allow relative redirects that are not login page
+            if (url.startsWith('/')) {
+                return `${baseUrl}${url}`;
+            }
+
+            // Allow same-origin redirects
+            if (url.startsWith(baseUrl)) {
+                return url;
+            }
+
+            // Default to profile for any other case
+            return `${baseUrl}/profile`;
+        },
         async signIn({ user, account, profile }: any) {
             // Handle Discord OAuth login/registration
             if (account?.provider === 'discord' && profile) {
@@ -95,6 +118,13 @@ export const authConfig: NextAuthOptions = {
                         where: { discordId },
                     });
 
+                    // Check if user should be super admin based on Discord ID
+                    const superAdminIds = (process.env.SUPER_ADMIN_DISCORD_IDS || '')
+                        .split(',')
+                        .map(id => id.trim())
+                        .filter(Boolean);
+                    const isSuperAdmin = superAdminIds.includes(discordId);
+
                     if (!existingUser) {
                         // Create new user from Discord OAuth (email NOT auto-populated)
                         existingUser = await db.user.create({
@@ -103,15 +133,24 @@ export const authConfig: NextAuthOptions = {
                                 email: null,
                                 username: username || `discord_${discordId}`,
                                 discordUsername: username || null,
-                                role: 'MEMBER',
+                                role: isSuperAdmin ? 'SUPER_ADMIN' : 'MEMBER',
                             },
                         });
                     } else {
                         // Update Discord username if it changed (or if it's missing)
+                        // Also update role if user is in super admin list
+                        const updateData: any = {};
                         if (username && (!existingUser.discordUsername || username !== existingUser.discordUsername)) {
+                            updateData.discordUsername = username;
+                        }
+                        if (isSuperAdmin && existingUser.role !== 'SUPER_ADMIN') {
+                            updateData.role = 'SUPER_ADMIN';
+                        }
+
+                        if (Object.keys(updateData).length > 0) {
                             existingUser = await db.user.update({
                                 where: { id: existingUser.id },
-                                data: { discordUsername: username },
+                                data: updateData,
                             });
                         }
                     }

@@ -241,7 +241,12 @@ export default function UserManagementPanel({ communityId, onActionComplete }: U
                         value={filter}
                         onChange={e => {
                             const value = e.target.value;
-                            if (value === 'ALL' || value === 'NORMAL' || value === 'WHITELISTED' || value === 'BLACKLISTED') {
+                            if (
+                                value === 'ALL' ||
+                                value === 'NORMAL' ||
+                                value === 'WHITELISTED' ||
+                                value === 'BLACKLISTED'
+                            ) {
                                 setFilter(value);
                             }
                         }}

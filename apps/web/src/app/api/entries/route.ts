@@ -116,29 +116,20 @@ export async function POST(request: NextRequest) {
         );
     } catch (error) {
         console.error('[API Error] POST /api/entries:', error);
-        
+
         if (error instanceof z.ZodError) {
-            return apiResponse(
-                { error: 'VALIDATION_ERROR', issues: error.issues },
-                400
-            );
+            return apiResponse({ error: 'VALIDATION_ERROR', issues: error.issues }, 400);
         }
-        
+
         if (error instanceof ApiError) {
-            return apiResponse(
-                { error: error.code, message: error.message },
-                error.statusCode
-            );
+            return apiResponse({ error: error.code, message: error.message }, error.statusCode);
         }
 
         if (error instanceof Error) {
             console.error('Error details:', error.message, error.stack);
         }
-        
-        return apiResponse(
-            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to create entry' },
-            500
-        );
+
+        return apiResponse({ error: 'INTERNAL_SERVER_ERROR', message: 'Failed to create entry' }, 500);
     }
 }
 
@@ -177,17 +168,11 @@ export async function GET(request: NextRequest) {
         return apiResponse(entries);
     } catch (error) {
         console.error('[API Error] GET /api/entries:', error);
-        
+
         if (error instanceof ApiError) {
-            return apiResponse(
-                { error: error.code, message: error.message },
-                error.statusCode
-            );
+            return apiResponse({ error: error.code, message: error.message }, error.statusCode);
         }
 
-        return apiResponse(
-            { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch entries' },
-            500
-        );
+        return apiResponse({ error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch entries' }, 500);
     }
 }

@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * Community category badge component
  * Displays a category with appropriate styling

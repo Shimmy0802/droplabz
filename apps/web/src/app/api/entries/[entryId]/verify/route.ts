@@ -72,12 +72,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ en
         return NextResponse.json(verificationResult);
     } catch (error) {
         console.error('[API Error] POST /api/entries/[entryId]/verify:', error);
-        
+
         if (error instanceof ApiError) {
-            return NextResponse.json(
-                { error: error.code, message: error.message },
-                { status: error.statusCode }
-            );
+            return NextResponse.json({ error: error.code, message: error.message }, { status: error.statusCode });
         }
 
         return NextResponse.json(
@@ -86,7 +83,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ en
                 message: 'Failed to verify entry',
                 details: error instanceof Error ? error.message : 'Unknown error',
             },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

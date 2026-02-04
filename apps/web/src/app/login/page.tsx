@@ -41,8 +41,18 @@ function LoginContent() {
         }
     };
 
-    const handleDiscordSignIn = () => {
-        signIn('discord', { redirect: true, redirectTo: callbackUrl });
+    const handleDiscordSignIn = async () => {
+        // Use redirect: false so we can handle the redirect ourselves to /profile
+        // instead of letting NextAuth redirect to the signin page
+        const result = await signIn('discord', { redirect: false });
+        console.log('[Discord SignIn]', result);
+
+        if (result?.ok) {
+            // Redirect to profile on successful auth
+            router.push('/profile');
+        } else if (result?.error) {
+            setError(`Discord login failed: ${result.error}`);
+        }
     };
 
     return (

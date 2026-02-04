@@ -115,24 +115,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pre
         );
     } catch (error) {
         console.error('[API Error] POST /api/presales/[presaleId]/entries:', error);
-        
+
         if (error instanceof z.ZodError) {
-            return NextResponse.json(
-                { error: 'VALIDATION_ERROR', issues: error.issues },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'VALIDATION_ERROR', issues: error.issues }, { status: 400 });
         }
-        
+
         if (error instanceof ApiError) {
-            return NextResponse.json(
-                { error: error.code, message: error.message },
-                { status: error.statusCode }
-            );
+            return NextResponse.json({ error: error.code, message: error.message }, { status: error.statusCode });
         }
 
         return NextResponse.json(
             { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to create entry' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -192,17 +186,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pre
         return NextResponse.json(transformed);
     } catch (error) {
         console.error('[API Error] GET /api/presales/[presaleId]/entries:', error);
-        
+
         if (error instanceof ApiError) {
-            return NextResponse.json(
-                { error: error.code, message: error.message },
-                { status: error.statusCode }
-            );
+            return NextResponse.json({ error: error.code, message: error.message }, { status: error.statusCode });
         }
 
         return NextResponse.json(
             { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch entries' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

@@ -1,5 +1,3 @@
-'use client';
-
 interface StatsPanelProps {
     stats: {
         totalEvents: number;

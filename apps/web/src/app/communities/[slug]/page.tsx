@@ -8,6 +8,7 @@ import { StatsPanel } from '@/components/community/StatsPanel';
 import { ActionButtons } from '@/components/community/ActionButtons';
 import { AnnouncementCard } from '@/components/community/AnnouncementCard';
 import { CreateAnnouncementForm } from '@/components/community/CreateAnnouncementForm';
+import { JoinCommunityButton } from '@/components/community/JoinCommunityButton';
 
 interface Community {
     id: string;
@@ -20,6 +21,7 @@ interface Community {
     tags: string[];
     rating?: number;
     isVerified?: boolean;
+    isListed?: boolean;
     nftMintAddress?: string;
     socials?: {
         twitter?: string | null;
@@ -100,6 +102,7 @@ export default function CommunityPage({ params }: { params: Promise<{ slug: stri
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<TabType>('active');
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isMember, setIsMember] = useState(false);
 
     useEffect(() => {
         params.then(p => {
@@ -154,16 +157,19 @@ export default function CommunityPage({ params }: { params: Promise<{ slug: stri
             // Get announcements
             await loadAnnouncements(communityData.id);
 
-            // Check if user is admin of this community
+            // Check if user is admin or member of this community
             if (session?.user?.id) {
                 const memberRes = await fetch(`/api/communities/${communityData.id}/members?userId=${session.user.id}`);
                 if (memberRes.ok) {
                     const memberData = await memberRes.json();
+                    setIsMember(true);
                     setIsAdmin(
                         memberData.role === 'OWNER' ||
                             memberData.role === 'ADMIN' ||
                             session.user.role === 'SUPER_ADMIN',
                     );
+                } else {
+                    setIsMember(false);
                 }
             }
         } catch (err) {
@@ -245,6 +251,19 @@ export default function CommunityPage({ params }: { params: Promise<{ slug: stri
                         memberCount={stats.memberCount}
                         reviewCount={stats.reviewCount}
                     />
+
+                    {/* Join Community Button */}
+                    {!isAdmin && (
+                        <div className="flex justify-center">
+                            <JoinCommunityButton
+                                communityId={community.id}
+                                isAuthenticated={!!session}
+                                isMember={isMember}
+                                isListed={community.isListed || false}
+                                onJoinSuccess={() => loadCommunityData(community.slug)}
+                            />
+                        </div>
+                    )}
 
                     {/* Action Buttons */}
                     <ActionButtons discordUrl={community.socials?.discord} websiteUrl={community.socials?.website} />

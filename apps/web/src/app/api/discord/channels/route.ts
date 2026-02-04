@@ -61,22 +61,20 @@ export async function GET(req: NextRequest) {
             .map(channel => ({
                 id: channel.id,
                 name: channel.name,
+                parentId: channel.parent_id || null,
             }));
 
         return NextResponse.json({ channels: textChannels });
     } catch (error) {
         console.error('[API Error] GET /api/discord/channels:', error);
-        
+
         if (error instanceof ApiError) {
-            return NextResponse.json(
-                { error: error.code, message: error.message },
-                { status: error.statusCode }
-            );
+            return NextResponse.json({ error: error.code, message: error.message }, { status: error.statusCode });
         }
 
         return NextResponse.json(
             { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch Discord channels' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

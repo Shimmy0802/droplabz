@@ -110,24 +110,18 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(event);
     } catch (error) {
         console.error('[API Error] POST /api/events:', error);
-        
+
         if (error instanceof z.ZodError) {
-            return NextResponse.json(
-                { error: 'VALIDATION_ERROR', issues: error.issues },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'VALIDATION_ERROR', issues: error.issues }, { status: 400 });
         }
-        
+
         if (error instanceof ApiError) {
-            return NextResponse.json(
-                { error: error.code, message: error.message },
-                { status: error.statusCode }
-            );
+            return NextResponse.json({ error: error.code, message: error.message }, { status: error.statusCode });
         }
 
         return NextResponse.json(
             { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to create event' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -187,17 +181,14 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(events);
     } catch (error) {
         console.error('[API Error] GET /api/events:', error);
-        
+
         if (error instanceof ApiError) {
-            return NextResponse.json(
-                { error: error.code, message: error.message },
-                { status: error.statusCode }
-            );
+            return NextResponse.json({ error: error.code, message: error.message }, { status: error.statusCode });
         }
 
         return NextResponse.json(
             { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch events' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

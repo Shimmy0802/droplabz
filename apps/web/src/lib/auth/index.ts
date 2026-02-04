@@ -1,4 +1,4 @@
-import NextAuth from 'next-auth';
+import NextAuth, { getServerSession } from 'next-auth';
 import { authConfig } from './config';
 
 /**
@@ -8,7 +8,8 @@ import { authConfig } from './config';
 
 const handler = NextAuth(authConfig);
 
-export const { auth, signIn, signOut } = NextAuth(authConfig);
+// Export getServerSession as auth for API route usage
+export const auth = () => getServerSession(authConfig);
 export { handler as GET, handler as POST };
 
 /**

@@ -1,49 +1,123 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/middleware';
 import { apiResponse, apiError } from '@/lib/api-utils';
 import { db } from '@/lib/db';
-import { z } from 'zod';
 
-const createCommunitySchema = z.object({
-    name: z.string().min(1, 'Community name is required'),
-    slug: z
-        .string()
-        .min(1, 'Slug is required')
-        .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
-    description: z.string().optional().default(''),
-    guildId: z.string().optional().nullable(),
-    categories: z.array(z.enum(['NFT', 'Gaming', 'DeFi', 'DAO', 'Community'])).optional(),
-});
+/**
+ * Convert FormData to object
+ */
+async function parseFormData(request: NextRequest) {
+    const formData = await request.formData();
+    const data: any = {};
+
+    for (const [key, value] of formData.entries()) {
+        if (key === 'logo' || key === 'banner') {
+            // Handle file uploads - store as Base64 or upload to cloud storage
+            // For now, we'll store the filename and size
+            if (value instanceof File) {
+                const buffer = await value.arrayBuffer();
+                const base64 = Buffer.from(buffer).toString('base64');
+                data[key] = `data:${value.type};base64,${base64}`;
+            }
+        } else if (key === 'socials' || key === 'settings' || key === 'types') {
+            // Parse JSON fields
+            try {
+                data[key] = JSON.parse(value as string);
+            } catch {
+                data[key] = value;
+            }
+        } else if (key === 'type') {
+            data.types = [value];
+        } else {
+            // Convert empty strings to undefined for optional fields
+            data[key] = value === '' ? undefined : value;
+        }
+    }
+
+    return data;
+}
 
 /**
  * POST /api/communities
- * Create a new community
+ * Create a new community with wizard data
+ * Accepts FormData with file uploads
  */
 export async function POST(request: NextRequest) {
     try {
         const user = await getCurrentUser();
-        const body = await request.json();
 
-        const validatedData = createCommunitySchema.parse(body);
+        // Parse FormData
+        const formDataObject = await parseFormData(request);
+        console.log('[DEBUG] FormData object:', JSON.stringify(formDataObject, null, 2));
+
+        // Manual validation instead of Zod
+        const { name, slug, types, description, discordGuildId, socials, settings } = formDataObject;
+
+        // Validate required fields
+        if (!name || typeof name !== 'string' || name.length === 0) {
+            return NextResponse.json(
+                { error: 'VALIDATION_ERROR', message: 'Community name is required' },
+                { status: 400 },
+            );
+        }
+
+        if (!slug || typeof slug !== 'string' || slug.length === 0) {
+            return NextResponse.json({ error: 'VALIDATION_ERROR', message: 'Slug is required' }, { status: 400 });
+        }
+
+        if (!slug.match(/^[a-z0-9-]+$/)) {
+            return NextResponse.json(
+                {
+                    error: 'VALIDATION_ERROR',
+                    message: 'Slug must contain only lowercase letters, numbers, and hyphens',
+                },
+                { status: 400 },
+            );
+        }
+
+        if (!types || !Array.isArray(types) || types.length === 0) {
+            return NextResponse.json(
+                { error: 'VALIDATION_ERROR', message: 'Select at least one community type' },
+                { status: 400 },
+            );
+        }
+
+        console.log('[DEBUG] Validation passed');
 
         // Check if slug already exists
         const existing = await db.community.findUnique({
-            where: { slug: validatedData.slug },
+            where: { slug },
         });
 
         if (existing) {
-            return apiError({ code: 'SLUG_EXISTS', status: 400, message: 'Slug already taken' });
+            return NextResponse.json({ error: 'SLUG_EXISTS', message: 'Slug already taken' }, { status: 400 });
         }
+
+        // Extract Discord channel IDs
+        const announcementChannelId = settings?.discord?.announcementChannelId || undefined;
+        const giveawayChannelId = settings?.discord?.giveawayChannelId || undefined;
+        const giveawayEntryChannelId = settings?.discord?.giveawayEntryChannelId || undefined;
+        const winnerChannelId = settings?.discord?.winnerChannelId || undefined;
+        const adminChannelId = settings?.discord?.adminChannelId || undefined;
 
         // Create community
         const community = await db.community.create({
             data: {
-                name: validatedData.name,
-                slug: validatedData.slug,
-                description: validatedData.description,
+                name,
+                slug,
+                description: description || '',
                 ownerId: user.id,
-                guildId: validatedData.guildId,
-                categories: validatedData.categories || [],
+                guildId: discordGuildId,
+                discordAnnouncementChannelId: announcementChannelId,
+                discordGiveawayChannelId: giveawayChannelId,
+                discordGiveawayEntryChannelId: giveawayEntryChannelId,
+                discordWinnerChannelId: winnerChannelId,
+                discordAdminChannelId: adminChannelId,
+                icon: formDataObject.logo || undefined,
+                banner: formDataObject.banner || undefined,
+                categories: types,
+                socials: socials || {},
+                solanaConfig: settings || {},
                 isVerified: false,
                 verificationStatus: 'PENDING',
                 verificationRequestedAt: new Date(),
@@ -68,9 +142,13 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        return apiResponse(community, 201);
+        return NextResponse.json(community, { status: 201 });
     } catch (error) {
-        return apiError(error);
+        console.error('[API Error] POST /api/communities:', error);
+        return NextResponse.json(
+            { error: 'INTERNAL_ERROR', message: error instanceof Error ? error.message : 'Internal server error' },
+            { status: 500 },
+        );
     }
 }
 

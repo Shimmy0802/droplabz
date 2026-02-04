@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 import { SocialLinks } from './SocialLinks';
 import { CategoriesBadges } from '@/components/CategoryBadge';

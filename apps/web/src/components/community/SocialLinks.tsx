@@ -1,5 +1,3 @@
-'use client';
-
 interface SocialLinksProps {
     socials?: {
         twitter?: string | null;

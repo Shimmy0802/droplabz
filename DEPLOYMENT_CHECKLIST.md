@@ -6,13 +6,13 @@
 
 ## What Was Changed
 
-| File | Change | Why |
-|------|--------|-----|
-| `.npmrc` | Primary registry: `registry.yarnpkg.com` | Bypass npm.org outage |
-| `.npmrc` | Retries: 10x, Timeout: 180s | Allow graceful fallback |
-| `vercel.json` | Added `--no-frozen-lockfile` | Regenerate lockfile with working registry |
-| `vercel.json` | `NODE_OPTIONS=--max-old-space-size=4096` | Prevent OOM on free tier |
-| `.vercelignore` | Removed `pnpm-lock.yaml` | Enable smart caching |
+| File            | Change                                   | Why                                       |
+| --------------- | ---------------------------------------- | ----------------------------------------- |
+| `.npmrc`        | Primary registry: `registry.yarnpkg.com` | Bypass npm.org outage                     |
+| `.npmrc`        | Retries: 10x, Timeout: 180s              | Allow graceful fallback                   |
+| `vercel.json`   | Added `--no-frozen-lockfile`             | Regenerate lockfile with working registry |
+| `vercel.json`   | `NODE_OPTIONS=--max-old-space-size=4096` | Prevent OOM on free tier                  |
+| `.vercelignore` | Removed `pnpm-lock.yaml`                 | Enable smart caching                      |
 
 ## Vercel Build Status
 
@@ -31,6 +31,7 @@ Resolving dependencies from https://registry.yarnpkg.com/
 ```
 
 Then:
+
 ```
 > cd apps/web && pnpm build
 
@@ -66,10 +67,10 @@ curl https://your-vercel-domain.vercel.app
 
 1. **Vercel logs**: Full error message in build output
 2. **GitHub commit**: Verify `.npmrc` was actually committed
-   ```bash
-   git show HEAD:.npmrc | grep registry
-   # Should output: registry=https://registry.yarnpkg.com/
-   ```
+    ```bash
+    git show HEAD:.npmrc | grep registry
+    # Should output: registry=https://registry.yarnpkg.com/
+    ```
 3. **npm registry status**: Check https://status.npmjs.org/
 
 If Yarn registry is also down, switch to **GitHub Package Registry**:

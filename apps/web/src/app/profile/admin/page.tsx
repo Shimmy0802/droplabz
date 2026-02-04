@@ -118,6 +118,57 @@ export default function AdminPage() {
                 </div>
             )}
 
+            {/* Quick Links */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Link
+                    href="/profile/admin/users"
+                    className="bg-[#111528] border border-[rgba(0,212,255,0.2)] rounded-lg p-6 hover:border-[#00d4ff] transition group"
+                >
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#00d4ff] transition">
+                                User Management
+                            </h3>
+                            <p className="text-gray-400 text-sm">
+                                View and manage all users, change roles, and monitor activity
+                            </p>
+                        </div>
+                        <svg className="w-8 h-8 text-[#00d4ff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                            />
+                        </svg>
+                    </div>
+                </Link>
+
+                <Link
+                    href="/profile/admin/communities"
+                    className="bg-[#111528] border border-[rgba(0,255,65,0.2)] rounded-lg p-6 hover:border-[#00ff41] transition group"
+                >
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#00ff41] transition">
+                                Community Management
+                            </h3>
+                            <p className="text-gray-400 text-sm">
+                                Manage all communities, verify, feature, and moderate content
+                            </p>
+                        </div>
+                        <svg className="w-8 h-8 text-[#00ff41]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                            />
+                        </svg>
+                    </div>
+                </Link>
+            </div>
+
             {/* Communities Management */}
             <div className="bg-[#111528] border border-[rgba(0,255,65,0.1)] rounded-lg p-6">
                 <h2 className="text-xl font-semibold text-white mb-4">All Communities ({communities.length})</h2>

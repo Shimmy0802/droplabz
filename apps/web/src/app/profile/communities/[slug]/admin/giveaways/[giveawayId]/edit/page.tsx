@@ -1,30 +1,25 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { EditGiveawayForm } from '@/components/giveaways/EditGiveawayForm';
 import { ArrowLeft } from 'lucide-react';
+import { AdminLoadingState } from '@/components/admin/AdminLoadingState';
+import { useRequireAuthRedirect } from '@/hooks/useRequireAuthRedirect';
 
 export default function EditGiveawayPage() {
     const { slug, giveawayId } = useParams() as { slug: string; giveawayId: string };
-    const router = useRouter();
-    const { status } = useSession();
+    const { status } = useRequireAuthRedirect();
     const [event, setEvent] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (status === 'unauthenticated') {
-            router.push('/login');
-            return;
-        }
-
         if (status === 'authenticated') {
             fetchEvent();
         }
-    }, [status, giveawayId, router]);
+    }, [giveawayId, status]);
 
     const fetchEvent = async () => {
         try {
@@ -48,12 +43,8 @@ export default function EditGiveawayPage() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="max-w-4xl mx-auto space-y-6">
-                <div className="h-64 bg-gray-700 rounded animate-pulse" />
-            </div>
-        );
+    if (status === 'loading' || loading) {
+        return <AdminLoadingState variant="form" />;
     }
 
     if (error || !event) {

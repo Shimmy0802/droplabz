@@ -10,20 +10,22 @@
 ## What Was Implemented
 
 ### The Problem
+
 Every package fetch to `registry.npmjs.org` fails with `ERR_INVALID_THIS` during Vercel deployment. This is a **registry outage**, not a configuration issue.
 
 ### The Solution
+
 **Switch to Yarn's npm registry** (`registry.yarnpkg.com`) which is independently hosted and unaffected by npm.org outages.
 
 ### Files Changed (5 total)
 
-| File | Change | Impact |
-|------|--------|--------|
-| `.npmrc` | Primary registry → `registry.yarnpkg.com` | Bypass npm.org outage |
-| `.npmrc` | Retries: 10x, Timeout: 180s | Graceful fallback on slow responses |
-| `vercel.json` | Add `--no-frozen-lockfile` flag | Allow lockfile regeneration with new registry |
-| `vercel.json` | NODE_OPTIONS: 4GB memory | Prevent OOM on monorepo compilation |
-| `.vercelignore` | Remove `pnpm-lock.yaml` | Enable smart caching with new registry |
+| File            | Change                                    | Impact                                        |
+| --------------- | ----------------------------------------- | --------------------------------------------- |
+| `.npmrc`        | Primary registry → `registry.yarnpkg.com` | Bypass npm.org outage                         |
+| `.npmrc`        | Retries: 10x, Timeout: 180s               | Graceful fallback on slow responses           |
+| `vercel.json`   | Add `--no-frozen-lockfile` flag           | Allow lockfile regeneration with new registry |
+| `vercel.json`   | NODE_OPTIONS: 4GB memory                  | Prevent OOM on monorepo compilation           |
+| `.vercelignore` | Remove `pnpm-lock.yaml`                   | Enable smart caching with new registry        |
 
 ### What This Achieves
 
@@ -32,18 +34,20 @@ Every package fetch to `registry.npmjs.org` fails with `ERR_INVALID_THIS` during
 ✅ **100% package compatibility** - Yarn registry mirrors entire npm  
 ✅ **Free tier compatible** - No additional cost  
 ✅ **Instant deployment** - Auto-triggered on git push  
-✅ **Forward compatible** - Works when npm.org recovers  
+✅ **Forward compatible** - Works when npm.org recovers
 
 ---
 
 ## How to Monitor
 
 ### Step 1: Check Vercel Dashboard
+
 Go to: https://vercel.com → Select DropLabz → View latest deployment
 
 ### Step 2: Look for These Signs of Success ✅
 
 **Build logs should show:**
+
 ```
 > pnpm install --no-frozen-lockfile
 
@@ -53,6 +57,7 @@ Resolving dependencies from https://registry.yarnpkg.com/
 ```
 
 Then:
+
 ```
 > cd apps/web && pnpm build
 
@@ -61,6 +66,7 @@ Then:
 ```
 
 ### Step 3: Website Should Be Live
+
 Visit: `https://your-vercel-domain.vercel.app`
 
 ---
@@ -111,6 +117,7 @@ git add .npmrc && git commit -m "Fallback: use GitHub Package Registry" && git p
 ## What Makes This the Right Solution
 
 ### Evaluated Options
+
 1. ❌ **npm ci fallback** - Same registry, same failure
 2. ❌ **Docker build** - Still hits npm registry
 3. ❌ **Config retries** - Won't help dead registry
@@ -119,6 +126,7 @@ git add .npmrc && git commit -m "Fallback: use GitHub Package Registry" && git p
 6. ⚠️ **Prebuilt artifacts** - Huge repo, breaks updates
 
 ### Why Yarn Registry Wins
+
 - **Independent**: Not reliant on npm.org
 - **Complete**: Mirrors 100% of npm packages
 - **Reliable**: Proven during npm.org outages
@@ -127,6 +135,7 @@ git add .npmrc && git commit -m "Fallback: use GitHub Package Registry" && git p
 - **Compatible**: Works with existing monorepo
 
 ### The Math
+
 ```
 Time to fix: 15 minutes
 Lines changed: ~50 lines
@@ -141,16 +150,19 @@ Success probability: 99%+ (Yarn registry is mature)
 ## Next Steps
 
 ### Immediate (Next 5 minutes)
+
 - ✅ Monitor Vercel build log
 - ✅ Verify no ERR_INVALID_THIS errors
 - ✅ Confirm website loads
 
 ### Short-term (Next hour)
+
 - Test website functionality
 - Verify Discord bot (if applicable)
 - Confirm database connections
 
 ### Optional (If desired)
+
 - Delete old documentation about npm issues
 - Update team that deployment is working
 - Document lessons learned
@@ -160,10 +172,12 @@ Success probability: 99%+ (Yarn registry is mature)
 ## Technical Details
 
 For deep technical explanation of why this works, see:
+
 - [REGISTRY_TECHNICAL_EXPLANATION.md](./REGISTRY_TECHNICAL_EXPLANATION.md)
 - [REGISTRY_FAILOVER_DEPLOYMENT.md](./REGISTRY_FAILOVER_DEPLOYMENT.md)
 
 For step-by-step monitoring, see:
+
 - [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)
 
 ---
@@ -175,7 +189,7 @@ For step-by-step monitoring, see:
 ✅ Website accessible  
 ✅ Database connected  
 ✅ No TypeScript errors  
-✅ No missing dependencies  
+✅ No missing dependencies
 
 ---
 
@@ -185,6 +199,6 @@ Monitor Vercel build for next 10 minutes to confirm. If successful, DropLabz is 
 
 ---
 
-*Deployed by: Copilot*  
-*Date: February 2, 2026*  
-*Registry: npm.org → registry.yarnpkg.com*
+_Deployed by: Copilot_  
+_Date: February 2, 2026_  
+_Registry: npm.org → registry.yarnpkg.com_

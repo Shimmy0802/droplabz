@@ -70,7 +70,7 @@ export interface Whitelist {
     };
 }
 
-export type TabType = 'overview' | 'whitelists' | 'giveaways' | 'presales' | 'members' | 'settings';
+export type TabType = 'overview' | 'whitelists' | 'giveaways' | 'presales' | 'members' | 'settings' | 'help';
 
 // State Shape
 export interface AdminPageState {
@@ -119,11 +119,14 @@ export type AdminAction =
     | { type: 'DISCORD_SET_GUILDS_LOADING'; payload: boolean }
     | { type: 'DISCORD_LINK_GUILD_START' }
     | { type: 'DISCORD_LINK_GUILD_SUCCESS'; payload: { guildId: string; guildName: string } }
+    | { type: 'DISCORD_LINK_GUILD_END' }
+    | { type: 'DISCORD_UNLINK_GUILD_SUCCESS' }
     | { type: 'DISCORD_OPEN_CHANNEL_SELECTOR'; payload: DiscordChannel[] }
     | { type: 'DISCORD_CLOSE_CHANNEL_SELECTOR' }
     | { type: 'DISCORD_SET_CHANNELS_LOADING'; payload: boolean }
     | { type: 'DISCORD_SELECT_CHANNEL_START' }
     | { type: 'DISCORD_SELECT_CHANNEL_SUCCESS'; payload: { channelId: string; channelName: string } }
+    | { type: 'DISCORD_SELECT_CHANNEL_END' }
     | { type: 'WHITELISTS_SET'; payload: Whitelist[] }
     | { type: 'WHITELISTS_SET_LOADING'; payload: boolean }
     | { type: 'WHITELISTS_SHOW_CREATE' }
@@ -223,6 +226,30 @@ function adminPageReducer(state: AdminPageState, action: AdminAction): AdminPage
                 },
             };
 
+        case 'DISCORD_LINK_GUILD_END':
+            return {
+                ...state,
+                discord: { ...state.discord, isLinking: false },
+            };
+
+        case 'DISCORD_UNLINK_GUILD_SUCCESS':
+            return {
+                ...state,
+                community: state.community
+                    ? {
+                          ...state.community,
+                          guildId: null,
+                          discordGuildName: null,
+                          discordAnnouncementChannelId: null,
+                          discordAnnouncementChannelName: null,
+                      }
+                    : null,
+                discord: {
+                    ...state.discord,
+                    isLinking: false,
+                },
+            };
+
         // Discord: Channel selection
         case 'DISCORD_OPEN_CHANNEL_SELECTOR':
             return {
@@ -267,6 +294,12 @@ function adminPageReducer(state: AdminPageState, action: AdminAction): AdminPage
                     isSelecting: false,
                     showChannelSelector: false,
                 },
+            };
+
+        case 'DISCORD_SELECT_CHANNEL_END':
+            return {
+                ...state,
+                discord: { ...state.discord, isSelecting: false },
             };
 
         // Whitelists

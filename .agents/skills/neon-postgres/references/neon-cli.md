@@ -123,11 +123,11 @@ Example GitHub Actions workflow:
 ```yaml
 - name: Create preview branch
   env:
-    NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
   run: |
-    neonctl branches create \
-      --project-id ${{ vars.NEON_PROJECT_ID }} \
-      --name preview-${{ github.event.pull_request.number }}
+      neonctl branches create \
+        --project-id ${{ vars.NEON_PROJECT_ID }} \
+        --name preview-${{ github.event.pull_request.number }}
 ```
 
 ## CLI vs MCP Server vs SDKs
@@ -142,8 +142,8 @@ Example GitHub Actions workflow:
 
 ## Documentation Resources
 
-| Topic          | URL                                                    |
-| -------------- | ------------------------------------------------------ |
+| Topic          | URL                                                   |
+| -------------- | ----------------------------------------------------- |
 | CLI Reference  | https://neon.com/docs/reference/neon-cli              |
 | CLI Install    | https://neon.com/docs/reference/cli-install           |
 | CLI Auth       | https://neon.com/docs/reference/cli-auth              |

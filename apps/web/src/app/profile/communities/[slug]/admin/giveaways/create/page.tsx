@@ -1,57 +1,27 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CreateGiveawayForm } from '@/components/giveaways/CreateGiveawayForm';
 import { ArrowLeft } from 'lucide-react';
+import { AdminLoadingState } from '@/components/admin/AdminLoadingState';
+import { useRequireAuthRedirect } from '@/hooks/useRequireAuthRedirect';
+import { useCommunityBySlug } from '@/hooks/useCommunityBySlug';
 
 export default function CreateGiveawayPage() {
     const { slug } = useParams() as { slug: string };
     const router = useRouter();
-    const { status } = useSession();
-    const [communityId, setCommunityId] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { status } = useRequireAuthRedirect();
+    const { community, isLoading } = useCommunityBySlug(slug, {
+        onNotFound: () => router.push('/profile/communities'),
+        onError: () => router.push('/profile/communities'),
+    });
 
-    useEffect(() => {
-        if (status === 'unauthenticated') {
-            router.push('/login');
-            return;
-        }
-
-        if (status === 'authenticated') {
-            fetchCommunity();
-        }
-    }, [status, slug, router]);
-
-    const fetchCommunity = async () => {
-        try {
-            const response = await fetch(`/api/communities?slug=${slug}`);
-            if (!response.ok) {
-                router.push('/profile/communities');
-                return;
-            }
-
-            const data = await response.json();
-            setCommunityId(data.id);
-        } catch (err) {
-            console.error('Error fetching community:', err);
-            router.push('/profile/communities');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="max-w-4xl mx-auto space-y-6">
-                <div className="h-64 bg-gray-700 rounded animate-pulse" />
-            </div>
-        );
+    if (status === 'loading' || isLoading) {
+        return <AdminLoadingState variant="form" />;
     }
 
-    if (!communityId) {
+    if (!community) {
         return null;
     }
 
@@ -74,7 +44,7 @@ export default function CreateGiveawayPage() {
                     </Link>
                 </div>
 
-                <CreateGiveawayForm communityId={communityId} slug={slug} />
+                <CreateGiveawayForm communityId={community.id} slug={slug} />
             </div>
         </div>
     );

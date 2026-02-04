@@ -1,58 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { Edit2, Trash2, Eye, Clock, Users, Gift } from 'lucide-react';
+import { AdminLoadingState } from '@/components/admin/AdminLoadingState';
+import { EventListPageShell } from '@/components/admin/EventListPageShell';
+import { EventListCard } from '@/components/admin/EventListCard';
+import { useCommunityBySlug } from '@/hooks/useCommunityBySlug';
+import { useCommunityEvents } from '@/hooks/useCommunityEvents';
 
-interface EventData {
-    id: string;
-    title: string;
-    description?: string;
-    prize?: string;
-    type: string;
-    status: string;
-    maxWinners: number;
-    startAt: string;
-    endAt: string;
-    createdAt: string;
-    _count?: {
-        entries: number;
-    };
-}
-
-export default function AdminGiveawaysPage({ params }: { params: Promise<{ slug: string }> }) {
-    const [slug, setSlug] = useState<string>('');
-    const [giveaways, setGiveaways] = useState<EventData[]>([]);
-    const [loading, setLoading] = useState(true);
+export default function AdminGiveawaysPage() {
+    const { slug } = useParams() as { slug: string };
+    const { community, isLoading: loadingCommunity } = useCommunityBySlug(slug);
+    const {
+        events: giveaways,
+        setEvents: setGiveaways,
+        isLoading: loadingGiveaways,
+        error,
+    } = useCommunityEvents({ communityId: community?.id, type: 'GIVEAWAY', enabled: !!community?.id });
     const [activeTab, setActiveTab] = useState<'active' | 'closed' | 'draft'>('active');
     const [deleting, setDeleting] = useState<string | null>(null);
-    const [error, setError] = useState<string>('');
-
-    useEffect(() => {
-        params.then(p => {
-            setSlug(p.slug);
-            loadGiveaways(p.slug);
-        });
-    }, [params]);
-
-    const loadGiveaways = async (communitySlug: string) => {
-        try {
-            setLoading(true);
-            const communityRes = await fetch(`/api/communities?slug=${communitySlug}`);
-            if (!communityRes.ok) throw new Error('Community not found');
-            const community = await communityRes.json();
-
-            const eventsRes = await fetch(`/api/events?communityId=${community.id}&type=GIVEAWAY`);
-            if (!eventsRes.ok) throw new Error('Failed to load giveaways');
-            const events = await eventsRes.json();
-            setGiveaways(events);
-        } catch (err) {
-            console.error('Error loading giveaways:', err);
-            setError('Failed to load giveaways');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleDelete = async (giveawayId: string) => {
         if (!window.confirm('Are you sure you want to delete this giveaway?')) return;
@@ -64,9 +32,9 @@ export default function AdminGiveawaysPage({ params }: { params: Promise<{ slug:
             });
 
             if (!response.ok) throw new Error('Failed to delete giveaway');
-            setGiveaways(giveaways.filter(g => g.id !== giveawayId));
+            setGiveaways(prev => prev.filter(g => g.id !== giveawayId));
         } catch (err) {
-            setError('Failed to delete giveaway');
+            console.error('Failed to delete giveaway:', err);
         } finally {
             setDeleting(null);
         }
@@ -82,9 +50,9 @@ export default function AdminGiveawaysPage({ params }: { params: Promise<{ slug:
 
             if (!response.ok) throw new Error('Failed to close giveaway');
             const updatedGiveaway = await response.json();
-            setGiveaways(giveaways.map(g => (g.id === giveawayId ? updatedGiveaway : g)));
+            setGiveaways(prev => prev.map(g => (g.id === giveawayId ? updatedGiveaway : g)));
         } catch (err) {
-            setError('Failed to close giveaway');
+            console.error('Failed to close giveaway:', err);
         }
     };
 
@@ -113,22 +81,15 @@ export default function AdminGiveawaysPage({ params }: { params: Promise<{ slug:
         });
     };
 
-    if (loading) {
-        return (
-            <div className="space-y-6">
-                <div className="text-center py-12 text-gray-400">Loading...</div>
-            </div>
-        );
+    if (loadingCommunity || loadingGiveaways) {
+        return <AdminLoadingState variant="list" />;
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-4xl font-bold text-[#00ff41]">Giveaways</h1>
-                    <p className="text-gray-400 mt-2">Manage your community giveaways</p>
-                </div>
+        <EventListPageShell
+            title="Giveaways"
+            description="Manage your community giveaways"
+            cta={
                 <Link
                     href={`/profile/communities/${slug}/admin/giveaways/create`}
                     className="px-6 py-3 bg-[#00ff41] text-[#0a0e27] font-semibold rounded-lg hover:bg-[#00dd33] transition flex items-center gap-2"
@@ -136,30 +97,28 @@ export default function AdminGiveawaysPage({ params }: { params: Promise<{ slug:
                     <Gift className="w-5 h-5" />
                     Create Giveaway
                 </Link>
-            </div>
-
-            {error && <div className="bg-red-500/20 border border-red-500 text-red-200 p-3 rounded">{error}</div>}
-
-            {/* Tabs */}
-            <div className="flex gap-2 border-b border-gray-700/50">
-                {(['active', 'closed', 'draft'] as const).map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`px-4 py-3 font-medium capitalize transition ${
-                            activeTab === tab
-                                ? 'text-[#00ff41] border-b-2 border-[#00ff41]'
-                                : 'text-gray-400 hover:text-white'
-                        }`}
-                    >
-                        {tab === 'active' ? `Active (${giveaways.filter(g => g.status === 'ACTIVE').length})` : ''}
-                        {tab === 'closed' ? `Closed (${giveaways.filter(g => g.status === 'CLOSED').length})` : ''}
-                        {tab === 'draft' ? `Draft (${giveaways.filter(g => g.status === 'DRAFT').length})` : ''}
-                    </button>
-                ))}
-            </div>
-
-            {/* Giveaways List */}
+            }
+            error={error}
+            tabs={
+                <div className="flex gap-2 border-b border-gray-700/50">
+                    {(['active', 'closed', 'draft'] as const).map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`px-4 py-3 font-medium capitalize transition ${
+                                activeTab === tab
+                                    ? 'text-[#00ff41] border-b-2 border-[#00ff41]'
+                                    : 'text-gray-400 hover:text-white'
+                            }`}
+                        >
+                            {tab === 'active' ? `Active (${giveaways.filter(g => g.status === 'ACTIVE').length})` : ''}
+                            {tab === 'closed' ? `Closed (${giveaways.filter(g => g.status === 'CLOSED').length})` : ''}
+                            {tab === 'draft' ? `Draft (${giveaways.filter(g => g.status === 'DRAFT').length})` : ''}
+                        </button>
+                    ))}
+                </div>
+            }
+        >
             <div className="space-y-4">
                 {filtered.length === 0 ? (
                     <div className="text-center py-12 bg-[#111528] border border-[#00d4ff]/20 rounded-lg">
@@ -174,53 +133,36 @@ export default function AdminGiveawaysPage({ params }: { params: Promise<{ slug:
                     </div>
                 ) : (
                     filtered.map(giveaway => (
-                        <div
+                        <EventListCard
                             key={giveaway.id}
-                            className="bg-[#111528] border border-[#00d4ff]/20 rounded-lg p-6 hover:border-[#00ff41]/50 transition"
-                        >
-                            <div className="flex justify-between items-start gap-4">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <h3 className="text-xl font-semibold text-white">{giveaway.title}</h3>
-                                        <span
-                                            className={`text-xs px-2 py-1 rounded font-medium ${
-                                                giveaway.status === 'ACTIVE'
-                                                    ? 'bg-[#00ff41]/20 text-[#00ff41]'
-                                                    : giveaway.status === 'CLOSED'
-                                                      ? 'bg-gray-500/20 text-gray-300'
-                                                      : 'bg-yellow-500/20 text-yellow-300'
-                                            }`}
-                                        >
-                                            {giveaway.status}
-                                        </span>
+                            title={giveaway.title}
+                            description={giveaway.description}
+                            status={giveaway.status}
+                            statusTone={
+                                giveaway.status === 'ACTIVE'
+                                    ? 'success'
+                                    : giveaway.status === 'CLOSED'
+                                      ? 'muted'
+                                      : 'warning'
+                            }
+                            meta={
+                                <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                                    <div className="flex items-center gap-1">
+                                        <Trophy className="w-4 h-4 text-[#ffd700]" />
+                                        {giveaway.maxWinners} winner{giveaway.maxWinners !== 1 ? 's' : ''}
                                     </div>
-
-                                    {giveaway.description && (
-                                        <p className="text-gray-400 text-sm mb-2">{giveaway.description}</p>
-                                    )}
-
-                                    {giveaway.prize && (
-                                        <p className="text-[#00d4ff] text-sm font-medium mb-3">🎁 {giveaway.prize}</p>
-                                    )}
-
-                                    <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                                        <div className="flex items-center gap-1">
-                                            <Trophy className="w-4 h-4 text-[#ffd700]" />
-                                            {giveaway.maxWinners} winner{giveaway.maxWinners !== 1 ? 's' : ''}
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Users className="w-4 h-4 text-[#00d4ff]" />
-                                            {giveaway._count?.entries || 0} entries
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Clock className="w-4 h-4" />
-                                            Ends {formatDate(giveaway.endAt)}
-                                        </div>
+                                    <div className="flex items-center gap-1">
+                                        <Users className="w-4 h-4 text-[#00d4ff]" />
+                                        {giveaway._count?.entries || 0} entries
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Clock className="w-4 h-4" />
+                                        Ends {formatDate(giveaway.endAt)}
                                     </div>
                                 </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-2">
+                            }
+                            actions={
+                                <>
                                     <Link
                                         href={`/profile/communities/${slug}/admin/giveaways/${giveaway.id}`}
                                         className="p-2 hover:bg-[#00d4ff]/20 rounded-lg text-[#00d4ff] transition"
@@ -252,13 +194,13 @@ export default function AdminGiveawaysPage({ params }: { params: Promise<{ slug:
                                     >
                                         <Trash2 className="w-5 h-5" />
                                     </button>
-                                </div>
-                            </div>
-                        </div>
+                                </>
+                            }
+                        />
                     ))
                 )}
             </div>
-        </div>
+        </EventListPageShell>
     );
 }
 

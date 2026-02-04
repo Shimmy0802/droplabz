@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 enum UserRole {
@@ -101,8 +102,16 @@ model Community {
   ownerId     String
   guildId     String?  @unique
   discordGuildName String?  // Guild name for displaying to admins
-  discordAnnouncementChannelId String?  // Channel ID for posting announcements
+  discordAnnouncementChannelId String?  // Channel ID for announcements channel
   discordAnnouncementChannelName String?  // Channel name for displaying to admins
+  discordGiveawayChannelId String?  // Channel ID for giveaways channel
+  discordGiveawayChannelName String?  // Channel name for displaying to admins
+  discordGiveawayEntryChannelId String?  // Channel ID for giveaway-entries channel
+  discordGiveawayEntryChannelName String?  // Channel name for displaying to admins
+  discordWinnerChannelId String?  // Channel ID for winners channel
+  discordWinnerChannelName String?  // Channel name for displaying to admins
+  discordAdminChannelId String?  // Channel ID for droplabz-admin channel
+  discordAdminChannelName String?  // Channel name for displaying to admins
   slug        String   @unique
   name        String
   description String?
