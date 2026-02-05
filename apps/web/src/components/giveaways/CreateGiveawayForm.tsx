@@ -39,6 +39,7 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
         description: '',
         prize: '',
         maxWinners: 1,
+        selectionMode: 'RANDOM' as 'RANDOM' | 'FCFS' | 'MANUAL',
         startDate: new Date().toISOString().split('T')[0],
         startTime: '00:00',
         endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -223,8 +224,8 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
                     imageUrl: imageUrl || undefined,
                     startAt: startDateTime.toISOString(),
                     endAt: endDateTime.toISOString(),
-                    maxWinners: formData.maxWinners,
-                    selectionMode: 'RANDOM',
+                    maxWinners: formData.selectionMode === 'RANDOM' ? undefined : formData.maxWinners,
+                    selectionMode: formData.selectionMode,
                     status: 'ACTIVE',
                     requirements: allRequirements,
                 }),
@@ -331,15 +332,76 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
                 <h3 className="text-xl font-semibold text-white">Settings</h3>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Max Winners</label>
-                    <input
-                        type="number"
-                        min="1"
-                        value={formData.maxWinners}
-                        onChange={e => setFormData({ ...formData, maxWinners: parseInt(e.target.value, 10) || 1 })}
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Selection Method</label>
+                    <select
+                        value={formData.selectionMode}
+                        onChange={e =>
+                            setFormData({
+                                ...formData,
+                                selectionMode: e.target.value as 'RANDOM' | 'FCFS' | 'MANUAL',
+                            })
+                        }
                         className="w-full px-4 py-2 bg-[#111528] border border-[#00d4ff]/30 rounded-lg text-white focus:border-[#00ff41] focus:outline-none"
-                    />
+                    >
+                        <option value="RANDOM">🎲 Random Draw (Unlimited Entries)</option>
+                        <option value="FCFS">⚡ First-Come, First-Served (Limited Capacity)</option>
+                        <option value="MANUAL">✋ Manual Selection</option>
+                    </select>
                 </div>
+
+                {formData.selectionMode === 'FCFS' && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Max Entry Capacity <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="number"
+                            min="1"
+                            required
+                            value={formData.maxWinners}
+                            onChange={e => setFormData({ ...formData, maxWinners: parseInt(e.target.value, 10) || 1 })}
+                            className="w-full px-4 py-2 bg-[#111528] border border-[#00d4ff]/30 rounded-lg text-white focus:border-[#00ff41] focus:outline-none"
+                            placeholder="Maximum number of entries allowed"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                            Once this limit is reached, no new entries will be accepted
+                        </p>
+                    </div>
+                )}
+
+                {formData.selectionMode === 'RANDOM' && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Max Winners (Optional)</label>
+                        <input
+                            type="number"
+                            min="1"
+                            value={formData.maxWinners}
+                            onChange={e => setFormData({ ...formData, maxWinners: parseInt(e.target.value, 10) || 1 })}
+                            className="w-full px-4 py-2 bg-[#111528] border border-[#00d4ff]/30 rounded-lg text-white focus:border-[#00ff41] focus:outline-none"
+                            placeholder="How many winners to randomly select"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                            Entries are unlimited. This is the count of winners you'll select at the end
+                        </p>
+                    </div>
+                )}
+
+                {formData.selectionMode === 'MANUAL' && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Max Winners (Optional)</label>
+                        <input
+                            type="number"
+                            min="1"
+                            value={formData.maxWinners}
+                            onChange={e => setFormData({ ...formData, maxWinners: parseInt(e.target.value, 10) || 1 })}
+                            className="w-full px-4 py-2 bg-[#111528] border border-[#00d4ff]/30 rounded-lg text-white focus:border-[#00ff41] focus:outline-none"
+                            placeholder="How many winners you plan to select"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                            You will manually select winners after the event closes
+                        </p>
+                    </div>
+                )}
 
                 <div className="space-y-4">
                     <div>

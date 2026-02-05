@@ -5,29 +5,43 @@ import { ApiError } from '@/lib/api-utils';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 
-const createEventSchema = z.object({
-    communityId: z.string().cuid(),
-    type: z.enum(['WHITELIST', 'PRESALE', 'COLLABORATION', 'GIVEAWAY']),
-    title: z.string().min(1).max(200),
-    description: z.string().max(1000).optional(),
-    prize: z.string().max(500).optional(),
-    imageUrl: z.string().optional(),
-    endAt: z.string().datetime(),
-    maxSpots: z.number().int().min(1).optional(),
-    selectionMode: z.enum(['RANDOM', 'MANUAL', 'FCFS']).optional(),
-    reservedSpots: z.number().int().min(0).optional(),
-    autoAssignDiscordRole: z.boolean().optional(),
-    winnerDiscordRoleId: z.string().optional(),
-    status: z.enum(['DRAFT', 'ACTIVE', 'CLOSED']).optional(),
-    requirements: z
-        .array(
-            z.object({
-                type: z.string(),
-                config: z.record(z.string(), z.unknown()),
-            }),
-        )
-        .optional(),
-});
+const createEventSchema = z
+    .object({
+        communityId: z.string().cuid(),
+        type: z.enum(['WHITELIST', 'PRESALE', 'COLLABORATION', 'GIVEAWAY']),
+        title: z.string().min(1).max(200),
+        description: z.string().max(1000).optional(),
+        prize: z.string().max(500).optional(),
+        imageUrl: z.string().optional(),
+        endAt: z.string().datetime(),
+        maxWinners: z.number().int().min(1).optional(),
+        selectionMode: z.enum(['RANDOM', 'MANUAL', 'FCFS']).optional(),
+        reservedSpots: z.number().int().min(0).optional(),
+        autoAssignDiscordRole: z.boolean().optional(),
+        winnerDiscordRoleId: z.string().optional(),
+        status: z.enum(['DRAFT', 'ACTIVE', 'CLOSED']).optional(),
+        requirements: z
+            .array(
+                z.object({
+                    type: z.string(),
+                    config: z.record(z.string(), z.unknown()),
+                }),
+            )
+            .optional(),
+    })
+    .refine(
+        data => {
+            // If FCFS, maxWinners is required
+            if (data.selectionMode === 'FCFS' && !data.maxWinners) {
+                return false;
+            }
+            return true;
+        },
+        {
+            message: 'Max entry capacity is required for FCFS selection mode',
+            path: ['maxWinners'],
+        },
+    );
 
 export async function POST(req: NextRequest) {
     try {
@@ -43,7 +57,7 @@ export async function POST(req: NextRequest) {
             prize,
             imageUrl,
             endAt,
-            maxSpots,
+            maxWinners,
             selectionMode,
             reservedSpots,
             autoAssignDiscordRole,
@@ -84,6 +98,12 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        // Determine maxWinners based on selection mode
+        // RANDOM: optional (can be undefined)
+        // FCFS: required (enforced by schema)
+        // MANUAL: optional but defaults to 1
+        const resolvedMaxWinners = selectionMode === 'RANDOM' ? maxWinners || undefined : maxWinners || 1;
+
         // Create event with requirements
         const event = await db.event.create({
             data: {
@@ -95,7 +115,7 @@ export async function POST(req: NextRequest) {
                 imageUrl,
                 endAt: new Date(endAt),
                 status: status || 'DRAFT',
-                maxWinners: maxSpots || 1,
+                maxWinners: resolvedMaxWinners,
                 selectionMode: selectionMode || 'RANDOM',
                 reservedSpots: reservedSpots || 0,
                 autoAssignDiscordRole: autoAssignDiscordRole || false,
@@ -122,8 +142,19 @@ export async function POST(req: NextRequest) {
 
         if (shouldAnnounce) {
             try {
-                // Make internal server call to announce endpoint
-                const announceUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/events/${event.id}/announce`;
+                // Build correct base URL for internal API call
+                // Vercel sets VERCEL_URL to the deployment URL
+                let announceBaseUrl = 'http://localhost:3000'; // Development default
+
+                if (process.env.VERCEL_URL) {
+                    // Vercel production environment
+                    announceBaseUrl = `https://${process.env.VERCEL_URL}`;
+                } else if (process.env.NEXTAUTH_URL) {
+                    // NextAuth configured URL (staging/custom domains)
+                    announceBaseUrl = process.env.NEXTAUTH_URL;
+                }
+
+                const announceUrl = `${announceBaseUrl}/api/events/${event.id}/announce`;
                 const announceResponse = await fetch(announceUrl, {
                     method: 'POST',
                     headers: {

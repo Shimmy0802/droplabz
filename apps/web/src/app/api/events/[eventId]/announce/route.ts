@@ -306,8 +306,17 @@ async function postAnnouncementToBot(event: any): Promise<{ messageId: string; u
             imageUrl: embed.image?.url,
         });
 
-        // Call the Discord bot's HTTP server (runs on port 3001)
-        const botUrl = 'http://127.0.0.1:3001/announce';
+        // Determine bot API URL based on environment
+        let botUrl = 'http://127.0.0.1:3001/announce'; // Development default
+
+        if (process.env.DISCORD_BOT_API_URL) {
+            // Production bot URL configured
+            botUrl = `${process.env.DISCORD_BOT_API_URL}/announce`;
+        } else if (process.env.VERCEL_ENV === 'production') {
+            // On Vercel production but no bot URL configured
+            console.warn('[announce] Bot API URL not configured for production');
+            throw new Error('Discord bot API not configured. Set DISCORD_BOT_API_URL environment variable.');
+        }
 
         console.log(`[announce] Posting to Discord bot API: ${botUrl}`);
 
@@ -321,6 +330,7 @@ async function postAnnouncementToBot(event: any): Promise<{ messageId: string; u
                 channelId: event.community.discordAnnouncementChannelId,
                 embed,
             }),
+            timeout: 10000, // 10 second timeout
         });
 
         console.log(`[announce] Bot API response status: ${response.status}`);
