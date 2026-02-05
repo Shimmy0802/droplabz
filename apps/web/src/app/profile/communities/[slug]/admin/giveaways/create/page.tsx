@@ -44,7 +44,7 @@ export default function CreateGiveawayPage() {
                     </Link>
                 </div>
 
-                <CreateGiveawayForm communityId={community.id} slug={slug} />
+                <CreateGiveawayForm communityId={community.id} slug={slug} guildId={community.guildId ?? undefined} />
             </div>
         </div>
     );

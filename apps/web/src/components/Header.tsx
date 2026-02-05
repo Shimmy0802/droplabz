@@ -9,44 +9,54 @@ export default function Header() {
     const { data: session, status } = useSession();
 
     return (
-        <header className="sticky top-0 z-50 bg-black backdrop-blur-lg bg-opacity-95 py-3">
+        <header className="sticky top-0 z-50 bg-transparent backdrop-blur-sm">
             <div className="px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between gap-6">
+                <div className="flex items-center justify-between gap-6 py-3">
                     {/* Logo */}
                     <div className="flex-shrink-0">
-                        <Link href="/" className="flex items-center">
+                        <Link href="/" className="flex items-center gap-3">
                             <Image
                                 src="/logos/droplabz.png"
-                                alt="DropLabz - Web3 Community Infrastructure"
-                                width={480}
-                                height={140}
-                                className="h-20 w-auto"
+                                alt="DropLabz — Community Operations Infrastructure"
+                                width={320}
+                                height={120}
+                                className="h-12 sm:h-14 w-auto scale-110 origin-left"
                                 priority
                             />
                         </Link>
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex items-center gap-6 text-sm font-medium text-gray-400">
+                    <nav className="hidden lg:flex items-center gap-2 text-sm font-medium text-gray-200">
                         <Link href="/" className="hover:text-[#00d4ff] transition">
-                            Home
+                            <span className="px-3 py-1.5 rounded border border-[rgba(0,255,65,0.18)] bg-[rgba(10,14,39,0.65)] hover:border-[rgba(0,255,65,0.4)] hover:text-[#00ff41] transition">
+                                Home
+                            </span>
                         </Link>
                         <Link href="/communities" className="hover:text-[#00d4ff] transition">
-                            Communities
+                            <span className="px-3 py-1.5 rounded border border-[rgba(0,212,255,0.18)] bg-[rgba(10,14,39,0.65)] hover:border-[rgba(0,212,255,0.45)] hover:text-[#00d4ff] transition">
+                                Communities
+                            </span>
                         </Link>
-                        <Link href="/#whitelists" className="hover:text-[#00d4ff] transition">
-                            Whitelists
+                        <Link href="/events" className="hover:text-[#00d4ff] transition">
+                            <span className="px-3 py-1.5 rounded border border-[rgba(0,255,65,0.12)] bg-[rgba(10,14,39,0.65)] hover:border-[rgba(0,255,65,0.4)] hover:text-[#00ff41] transition">
+                                Events
+                            </span>
                         </Link>
-                        <Link href="/#presales" className="hover:text-[#00d4ff] transition">
-                            Pre-Sales
+                        <Link href="/trending" className="hover:text-[#00d4ff] transition">
+                            <span className="px-3 py-1.5 rounded border border-[rgba(0,212,255,0.12)] bg-[rgba(10,14,39,0.65)] hover:border-[rgba(0,212,255,0.45)] hover:text-[#00d4ff] transition">
+                                Trending
+                            </span>
                         </Link>
-                        <Link href="/#collaborations" className="hover:text-[#00d4ff] transition">
-                            Collaborations
+                        <Link href="/giveaways" className="hover:text-[#00d4ff] transition">
+                            <span className="px-3 py-1.5 rounded border border-[rgba(0,255,65,0.12)] bg-[rgba(10,14,39,0.65)] hover:border-[rgba(0,255,65,0.4)] hover:text-[#00ff41] transition">
+                                Giveaways
+                            </span>
                         </Link>
                     </nav>
 
                     {/* Search Bar */}
-                    <div className="flex-1 max-w-xl">
+                    <div className="hidden md:flex w-full max-w-sm">
                         <SearchBar />
                     </div>
 
@@ -57,8 +67,14 @@ export default function Header() {
                         ) : session ? (
                             <div className="flex items-center gap-2">
                                 <Link
+                                    href="/profile/communities/create"
+                                    className="px-4 py-2 rounded-lg text-sm bg-[#00ff41] text-[#0a0e27] font-semibold hover:bg-[#00dd33] transition shadow-[0_0_16px_rgba(0,255,65,0.18)]"
+                                >
+                                    Create Community
+                                </Link>
+                                <Link
                                     href="/profile"
-                                    className="px-4 py-2 rounded-lg text-sm border border-[#00d4ff] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.1)] transition"
+                                    className="px-4 py-2 rounded-lg text-sm border border-[#00d4ff] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.1)] transition hidden sm:block"
                                 >
                                     Profile
                                 </Link>
@@ -78,10 +94,10 @@ export default function Header() {
                                     Login
                                 </Link>
                                 <Link
-                                    href="/signup"
-                                    className="px-4 py-2 rounded-lg text-sm bg-[#00ff41] text-[#0a0e27] font-semibold hover:bg-[#00dd33] transition shadow-[0_0_20px_rgba(0,255,65,0.3)] hover:shadow-[0_0_30px_rgba(0,255,65,0.5)]"
+                                    href="/profile/communities/create"
+                                    className="px-4 py-2 rounded-lg text-sm bg-[#00ff41] text-[#0a0e27] font-semibold hover:bg-[#00dd33] transition shadow-[0_0_16px_rgba(0,255,65,0.18)]"
                                 >
-                                    Sign Up
+                                    Create Community
                                 </Link>
                             </div>
                         )}

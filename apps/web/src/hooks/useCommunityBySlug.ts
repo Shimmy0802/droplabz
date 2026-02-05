@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Community } from '@/hooks/useAdminPageState';
 
 interface UseCommunityBySlugOptions {
@@ -12,8 +12,13 @@ export function useCommunityBySlug(slug: string | null, options?: UseCommunityBy
     const [community, setCommunity] = useState<Community | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const onNotFound = options?.onNotFound;
-    const onError = options?.onError;
+    const onNotFoundRef = useRef(options?.onNotFound);
+    const onErrorRef = useRef(options?.onError);
+
+    useEffect(() => {
+        onNotFoundRef.current = options?.onNotFound;
+        onErrorRef.current = options?.onError;
+    }, [options?.onNotFound, options?.onError]);
 
     const fetchCommunity = useCallback(async () => {
         if (!slug) return;
@@ -26,7 +31,7 @@ export function useCommunityBySlug(slug: string | null, options?: UseCommunityBy
                 if (response.status === 404) {
                     const message = 'Community not found';
                     setError(message);
-                    onNotFound?.();
+                    onNotFoundRef.current?.();
                     return;
                 }
                 throw new Error('Failed to fetch community');
@@ -37,11 +42,11 @@ export function useCommunityBySlug(slug: string | null, options?: UseCommunityBy
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to fetch community';
             setError(message);
-            onError?.(message);
+            onErrorRef.current?.(message);
         } finally {
             setIsLoading(false);
         }
-    }, [onError, onNotFound, slug]);
+    }, [slug]);
 
     useEffect(() => {
         fetchCommunity();

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { X, Image as ImageIcon } from 'lucide-react';
 
 interface GiveawayFormProps {
     communityId: string;
     slug?: string;
+    guildId?: string; // Discord guild ID for role fetching
     onSuccess?: () => void;
 }
 
@@ -16,11 +17,22 @@ interface Requirement {
     config: Record<string, any>;
 }
 
-export function CreateGiveawayForm({ communityId, slug, onSuccess }: GiveawayFormProps) {
+interface DiscordRole {
+    id: string;
+    name: string;
+    managed: boolean;
+}
+
+export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: GiveawayFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [requirements, setRequirements] = useState<Requirement[]>([]);
+    const [discordRoles, setDiscordRoles] = useState<DiscordRole[]>([]);
+    const [loadingRoles, setLoadingRoles] = useState(false);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -31,7 +43,95 @@ export function CreateGiveawayForm({ communityId, slug, onSuccess }: GiveawayFor
         startTime: '00:00',
         endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         endTime: '23:59',
+        imageUrl: '',
     });
+
+    // Fetch Discord roles when guildId is available
+    useEffect(() => {
+        if (guildId) {
+            fetchDiscordRoles();
+        }
+    }, [guildId]);
+
+    const fetchDiscordRoles = async () => {
+        if (!guildId) return;
+
+        setLoadingRoles(true);
+        try {
+            const response = await fetch(`/api/discord/roles?guildId=${guildId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch Discord roles');
+            }
+            const data = await response.json();
+            setDiscordRoles(data.roles || []);
+        } catch (err) {
+            console.error('Error fetching Discord roles:', err);
+            setError('Failed to load Discord roles. Role ID must be entered manually.');
+        } finally {
+            setLoadingRoles(false);
+        }
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            setError('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.');
+            return;
+        }
+
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            setError('File size exceeds 5MB limit');
+            return;
+        }
+
+        setImageFile(file);
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+        setError(null);
+    };
+
+    const handleRemoveImage = () => {
+        setImageFile(null);
+        setImagePreview(null);
+        setFormData({ ...formData, imageUrl: '' });
+    };
+
+    const uploadImage = async (): Promise<string | null> => {
+        if (!imageFile) return null;
+
+        setUploadingImage(true);
+        try {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', imageFile);
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: uploadFormData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to upload image');
+            }
+
+            const data = await response.json();
+            return data.url;
+        } catch (err) {
+            console.error('Error uploading image:', err);
+            throw new Error('Failed to upload image');
+        } finally {
+            setUploadingImage(false);
+        }
+    };
 
     const handleAddRequirement = (type: string) => {
         const newReq: Requirement = {
@@ -91,6 +191,15 @@ export function CreateGiveawayForm({ communityId, slug, onSuccess }: GiveawayFor
                 throw new Error('End date must be after start date');
             }
 
+            // Upload image if provided
+            let imageUrl = formData.imageUrl;
+            if (imageFile) {
+                const uploadedUrl = await uploadImage();
+                if (uploadedUrl) {
+                    imageUrl = uploadedUrl;
+                }
+            }
+
             const allRequirements = [
                 {
                     type: 'SOLANA_WALLET_CONNECTED',
@@ -111,6 +220,7 @@ export function CreateGiveawayForm({ communityId, slug, onSuccess }: GiveawayFor
                     title: formData.title,
                     description: formData.description,
                     prize: formData.prize,
+                    imageUrl: imageUrl || undefined,
                     startAt: startDateTime.toISOString(),
                     endAt: endDateTime.toISOString(),
                     maxWinners: formData.maxWinners,
@@ -180,6 +290,40 @@ export function CreateGiveawayForm({ communityId, slug, onSuccess }: GiveawayFor
                         className="w-full px-4 py-2 bg-[#111528] border border-[#00d4ff]/30 rounded-lg text-white placeholder-gray-500 focus:border-[#00ff41] focus:outline-none"
                     />
                 </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Giveaway Image (Optional)</label>
+                    <div className="space-y-3">
+                        {imagePreview ? (
+                            <div className="relative w-full h-48 bg-[#111528] border border-[#00d4ff]/30 rounded-lg overflow-hidden">
+                                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveImage}
+                                    className="absolute top-2 right-2 p-1 bg-red-500/80 hover:bg-red-500 rounded-full text-white"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            <label className="flex flex-col items-center justify-center w-full h-48 bg-[#111528] border-2 border-dashed border-[#00d4ff]/30 rounded-lg cursor-pointer hover:border-[#00ff41]/50 transition">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <ImageIcon className="w-10 h-10 mb-3 text-gray-400" />
+                                    <p className="mb-2 text-sm text-gray-400">
+                                        <span className="font-semibold">Click to upload</span> or drag and drop
+                                    </p>
+                                    <p className="text-xs text-gray-500">PNG, JPG, GIF, or WebP (MAX. 5MB)</p>
+                                </div>
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp,image/gif"
+                                    onChange={handleImageChange}
+                                    className="hidden"
+                                />
+                            </label>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Settings Section */}
@@ -192,7 +336,7 @@ export function CreateGiveawayForm({ communityId, slug, onSuccess }: GiveawayFor
                         type="number"
                         min="1"
                         value={formData.maxWinners}
-                        onChange={e => setFormData({ ...formData, maxWinners: parseInt(e.target.value) })}
+                        onChange={e => setFormData({ ...formData, maxWinners: parseInt(e.target.value, 10) || 1 })}
                         className="w-full px-4 py-2 bg-[#111528] border border-[#00d4ff]/30 rounded-lg text-white focus:border-[#00ff41] focus:outline-none"
                     />
                 </div>
@@ -281,14 +425,43 @@ export function CreateGiveawayForm({ communityId, slug, onSuccess }: GiveawayFor
 
                             {req.type === 'DISCORD_ROLE_REQUIRED' && (
                                 <div>
-                                    <label className="text-xs text-gray-400">Discord Role ID</label>
-                                    <input
-                                        type="text"
-                                        value={req.config.roleId || ''}
-                                        onChange={e => handleRequirementChange(req.id, 'roleId', e.target.value)}
-                                        placeholder="Enter Discord role ID"
-                                        className="w-full mt-1 px-3 py-1 bg-[#111528] border border-[#00d4ff]/20 rounded text-white text-sm focus:border-[#00ff41] focus:outline-none"
-                                    />
+                                    <label className="text-xs text-gray-400">
+                                        {guildId && discordRoles.length > 0 ? 'Discord Role' : 'Discord Role ID'}
+                                    </label>
+                                    {guildId && discordRoles.length > 0 ? (
+                                        <select
+                                            value={req.config.roleId || ''}
+                                            onChange={e => handleRequirementChange(req.id, 'roleId', e.target.value)}
+                                            className="w-full mt-1 px-3 py-2 bg-[#111528] border border-[#00d4ff]/20 rounded text-white text-sm focus:border-[#00ff41] focus:outline-none"
+                                            disabled={loadingRoles}
+                                        >
+                                            <option value="">
+                                                {loadingRoles ? 'Loading roles...' : 'Select a role'}
+                                            </option>
+                                            {discordRoles.map(role => (
+                                                <option key={role.id} value={role.id}>
+                                                    {role.name} {role.managed ? '(Managed)' : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <>
+                                            <input
+                                                type="text"
+                                                value={req.config.roleId || ''}
+                                                onChange={e =>
+                                                    handleRequirementChange(req.id, 'roleId', e.target.value)
+                                                }
+                                                placeholder="Enter Discord role ID"
+                                                className="w-full mt-1 px-3 py-1 bg-[#111528] border border-[#00d4ff]/20 rounded text-white text-sm focus:border-[#00ff41] focus:outline-none"
+                                            />
+                                            {!guildId && (
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Connect Discord server in Community Settings to select from a list
+                                                </p>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
                             )}
 
@@ -356,10 +529,10 @@ export function CreateGiveawayForm({ communityId, slug, onSuccess }: GiveawayFor
 
             <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || uploadingImage}
                 className="w-full px-6 py-3 bg-[#00ff41] text-[#0a0e27] font-semibold rounded-lg hover:bg-[#00dd33] disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-                {loading ? 'Creating Giveaway...' : 'Create Giveaway'}
+                {uploadingImage ? 'Uploading Image...' : loading ? 'Creating Giveaway...' : 'Create Giveaway'}
             </button>
         </form>
     );

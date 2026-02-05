@@ -72,7 +72,10 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ co
 
         if (error instanceof Error) {
             if (error.message.includes('401')) {
-                return NextResponse.json({ error: 'Unauthorized', message: 'You must be signed in to join a community' }, { status: 401 });
+                return NextResponse.json(
+                    { error: 'Unauthorized', message: 'You must be signed in to join a community' },
+                    { status: 401 },
+                );
             }
         }
 

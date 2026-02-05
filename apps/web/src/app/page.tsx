@@ -226,7 +226,7 @@ export default async function HomePage() {
                         </section>
 
                         {/* SECTION 2: Community Leaderboard - New Major Section */}
-                        <section>
+                        <section id="trending">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                                     <svg className="w-5 h-5 text-[#00d4ff]" fill="currentColor" viewBox="0 0 20 20">
@@ -317,7 +317,7 @@ export default async function HomePage() {
                         </section>
 
                         {/* SECTION 3: Events Section Below Leaderboard */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div id="events" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Minting Soon */}
                             {homepageData.upcomingMints.length > 0 && (
                                 <section>
@@ -414,6 +414,27 @@ export default async function HomePage() {
                                 </section>
                             )}
                         </div>
+
+                        {/* SECTION 4: Giveaways */}
+                        <section id="giveaways" className="mt-6">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-[#00ff41]" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M4 3a1 1 0 011-1h10a1 1 0 011 1v2a3 3 0 11-2 5.83V14a2 2 0 01-2 2H8a2 2 0 01-2-2V10.83A3 3 0 014 5V3z" />
+                                    </svg>
+                                    Giveaways
+                                </h3>
+                                <Link
+                                    href="/profile/communities/create"
+                                    className="text-xs px-3 py-1.5 rounded border border-[#00d4ff] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.1)] transition"
+                                >
+                                    Create Community
+                                </Link>
+                            </div>
+                            <div className="bg-[#111528] border border-[rgba(0,255,65,0.15)] rounded p-4 text-sm text-gray-400">
+                                Giveaways surface here when communities publish active events.
+                            </div>
+                        </section>
                     </div>
                 </div>
             </div>

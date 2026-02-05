@@ -11,13 +11,14 @@ const createEventSchema = z.object({
     title: z.string().min(1).max(200),
     description: z.string().max(1000).optional(),
     prize: z.string().max(500).optional(),
-    imageUrl: z.string().url().optional(),
+    imageUrl: z.string().optional(),
     endAt: z.string().datetime(),
     maxSpots: z.number().int().min(1).optional(),
     selectionMode: z.enum(['RANDOM', 'MANUAL', 'FCFS']).optional(),
     reservedSpots: z.number().int().min(0).optional(),
     autoAssignDiscordRole: z.boolean().optional(),
     winnerDiscordRoleId: z.string().optional(),
+    status: z.enum(['DRAFT', 'ACTIVE', 'CLOSED']).optional(),
     requirements: z
         .array(
             z.object({
@@ -47,12 +48,20 @@ export async function POST(req: NextRequest) {
             reservedSpots,
             autoAssignDiscordRole,
             winnerDiscordRoleId,
+            status,
             requirements,
         } = createEventSchema.parse(body);
 
         // Verify community exists and user is admin
         const community = await db.community.findUnique({
             where: { id: communityId },
+            select: {
+                id: true,
+                slug: true,
+                ownerId: true,
+                guildId: true,
+                discordAnnouncementChannelId: true,
+            },
         });
 
         if (!community) {
@@ -85,7 +94,7 @@ export async function POST(req: NextRequest) {
                 prize,
                 imageUrl,
                 endAt: new Date(endAt),
-                status: 'DRAFT', // Start as DRAFT, admin can publish when ready
+                status: status || 'DRAFT',
                 maxWinners: maxSpots || 1,
                 selectionMode: selectionMode || 'RANDOM',
                 reservedSpots: reservedSpots || 0,
@@ -106,6 +115,43 @@ export async function POST(req: NextRequest) {
                 entries: true,
             },
         });
+
+        // Auto-announce to Discord if ACTIVE and Discord is configured
+        const shouldAnnounce =
+            status === 'ACTIVE' && community.guildId && community.discordAnnouncementChannelId && type === 'GIVEAWAY';
+
+        if (shouldAnnounce) {
+            try {
+                // Make internal server call to announce endpoint
+                const announceUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/events/${event.id}/announce`;
+                const announceResponse = await fetch(announceUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Internal-Call': 'true',
+                        'X-User-Id': user.id,
+                    },
+                    body: JSON.stringify({
+                        communityId,
+                        trigger: 'CREATED',
+                    }),
+                });
+
+                if (announceResponse.ok) {
+                    console.log(`[Events] Auto-announced giveaway ${event.id} to Discord`);
+                } else {
+                    const errorText = await announceResponse.text();
+                    console.warn(
+                        `[Events] Failed to auto-announce giveaway ${event.id}:`,
+                        announceResponse.status,
+                        errorText,
+                    );
+                }
+            } catch (announceError) {
+                console.error('[Events] Error auto-announcing giveaway:', announceError);
+                // Don't fail the whole request if announcement fails
+            }
+        }
 
         return NextResponse.json(event);
     } catch (error) {

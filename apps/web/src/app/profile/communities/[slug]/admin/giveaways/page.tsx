@@ -60,9 +60,9 @@ export default function AdminGiveawaysPage() {
         const now = new Date();
         return giveaways.filter(g => {
             if (activeTab === 'active') {
-                return g.status === 'ACTIVE' && new Date(g.endAt) > now;
+                return g.status === 'ACTIVE' && g.endAt && new Date(g.endAt) > now;
             } else if (activeTab === 'closed') {
-                return g.status === 'CLOSED' || new Date(g.endAt) <= now;
+                return g.status === 'CLOSED' || (g.endAt && new Date(g.endAt) <= now);
             } else {
                 return g.status === 'DRAFT';
             }
@@ -71,7 +71,8 @@ export default function AdminGiveawaysPage() {
 
     const filtered = filterGiveaways();
 
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString?: string | null) => {
+        if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',

@@ -8,6 +8,7 @@ import { z } from 'zod';
 const announceSchema = z.object({
     communityId: z.string().cuid(),
     scheduleFor: z.string().datetime().optional(),
+    trigger: z.enum(['MANUAL', 'CREATED', 'ACTIVE', 'ENDING_SOON', 'WINNERS_PICKED', 'CLOSED']).optional(),
 });
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
@@ -15,8 +16,28 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ev
         const { eventId } = await params;
         console.log('[announce] POST request received for eventId:', eventId);
 
-        await requireAuth();
-        const user = await getCurrentUser();
+        // Check if this is an internal call
+        const isInternalCall = _req.headers.get('X-Internal-Call') === 'true';
+        const internalUserId = _req.headers.get('X-User-Id');
+
+        let user;
+        if (isInternalCall && internalUserId) {
+            // For internal calls, fetch user directly
+            console.log('[announce] Internal call detected, fetching user:', internalUserId);
+            const dbUser = await db.user.findUnique({
+                where: { id: internalUserId },
+                select: { id: true, email: true, role: true },
+            });
+            if (!dbUser) {
+                throw new ApiError('USER_NOT_FOUND', 404, 'User not found');
+            }
+            user = dbUser;
+        } else {
+            // For external calls, require normal auth
+            await requireAuth();
+            user = await getCurrentUser();
+        }
+
         console.log('[announce] User authenticated:', user.id);
 
         // Parse and validate input
@@ -32,7 +53,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ev
             throw new ApiError('INVALID_JSON', 400, 'Invalid request JSON');
         }
 
-        const { communityId, scheduleFor } = announceSchema.parse(body);
+        const { communityId, scheduleFor, trigger } = announceSchema.parse(body);
 
         // Fetch event
         const event = await db.event.findUnique({
@@ -115,12 +136,13 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ev
         // Create announcement record
         let announcement;
         try {
+            const triggerType = trigger || 'MANUAL';
             // Delete any existing announcement with the same trigger to allow re-posting
-            console.log('[announce] Checking for existing announcement with trigger MANUAL');
+            console.log('[announce] Checking for existing announcement with trigger', triggerType);
             const existingAnnouncement = await db.eventAnnouncement.findFirst({
                 where: {
                     eventId,
-                    trigger: 'MANUAL',
+                    trigger: triggerType,
                 },
             });
 
@@ -138,7 +160,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ev
                 data: {
                     eventId,
                     communityId: event.communityId,
-                    trigger: 'MANUAL',
+                    trigger: triggerType,
                     status: scheduleFor ? 'SCHEDULED' : 'QUEUED',
                     scheduledFor: scheduleFor ? new Date(scheduleFor) : new Date(),
                     triggeredBy: user.id,
@@ -272,12 +294,17 @@ async function postAnnouncementToBot(event: any): Promise<{ messageId: string; u
             eventId: event.id,
             type: event.type,
             title: event.title,
+            imageUrl: event.imageUrl,
+            hasImage: !!event.imageUrl,
         });
 
         const baseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
         const communitySlug = event.community.slug;
         const embed = buildProfessionalEventEmbed(event, communitySlug, baseUrl);
-        console.log('[announce] Embed built successfully');
+        console.log('[announce] Embed built successfully', {
+            hasImage: !!embed.image,
+            imageUrl: embed.image?.url,
+        });
 
         // Call the Discord bot's HTTP server (runs on port 3001)
         const botUrl = 'http://127.0.0.1:3001/announce';

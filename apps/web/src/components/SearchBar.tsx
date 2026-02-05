@@ -85,7 +85,7 @@ export default function SearchBar() {
                     value={query}
                     onChange={e => setQuery(e.target.value)}
                     onFocus={() => query.length >= 2 && setIsOpen(true)}
-                    placeholder="Search communities, whitelists..."
+                    placeholder="Search communities and events"
                     className="w-full px-4 py-2 pl-10 bg-[#111528] border border-[rgba(0,212,255,0.2)] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#00d4ff] focus:shadow-[0_0_10px_rgba(0,212,255,0.3)] transition-all"
                 />
                 <svg

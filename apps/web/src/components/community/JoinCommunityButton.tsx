@@ -11,7 +11,13 @@ interface JoinCommunityButtonProps {
     onJoinSuccess?: () => void;
 }
 
-export function JoinCommunityButton({ communityId, isAuthenticated, isMember, isListed, onJoinSuccess }: JoinCommunityButtonProps) {
+export function JoinCommunityButton({
+    communityId,
+    isAuthenticated,
+    isMember,
+    isListed,
+    onJoinSuccess,
+}: JoinCommunityButtonProps) {
     const router = useRouter();
     const [joining, setJoining] = useState(false);
     const [error, setError] = useState<string | null>(null);

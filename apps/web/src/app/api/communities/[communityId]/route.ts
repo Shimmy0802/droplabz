@@ -99,17 +99,14 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         return NextResponse.json(community);
     } catch (error) {
         console.error('[API Error] GET /api/communities/[communityId]:', error);
-        
+
         if (error instanceof ApiError) {
-            return NextResponse.json(
-                { error: error.code, message: error.message },
-                { status: error.statusCode }
-            );
+            return NextResponse.json({ error: error.code, message: error.message }, { status: error.statusCode });
         }
 
         return NextResponse.json(
             { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch community' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
@@ -190,20 +187,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                     error: 'VALIDATION_ERROR',
                     issues: error.issues,
                 },
-                { status: 400 }
+                { status: 400 },
             );
         }
-        
+
         if (error instanceof ApiError) {
-            return NextResponse.json(
-                { error: error.code, message: error.message },
-                { status: error.statusCode }
-            );
+            return NextResponse.json({ error: error.code, message: error.message }, { status: error.statusCode });
         }
 
         return NextResponse.json(
             { error: 'INTERNAL_SERVER_ERROR', message: 'Failed to update community' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }
