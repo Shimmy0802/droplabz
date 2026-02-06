@@ -54,7 +54,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
         // Handle search parameter
         if (search) {
             where.user = {
-                OR: [{ email: { contains: search, mode: 'insensitive' } }, { discordId: { contains: search } }],
+                OR: [
+                    { email: { contains: search, mode: 'insensitive' } },
+                    { username: { contains: search, mode: 'insensitive' } },
+                    { discordUsername: { contains: search, mode: 'insensitive' } },
+                ],
             };
         }
 

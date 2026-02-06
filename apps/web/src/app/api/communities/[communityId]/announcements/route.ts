@@ -24,12 +24,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
             offset: searchParams.get('offset'),
         });
 
-        // Get announcements
+        // Get announcements - use direct communityId field instead of nested Event relation
         const announcements = await db.eventAnnouncement.findMany({
             where: {
-                event: {
-                    communityId: communityId,
-                },
+                communityId: communityId,
             },
             include: {
                 event: {
@@ -46,9 +44,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
 
         const total = await db.eventAnnouncement.count({
             where: {
-                event: {
-                    communityId: communityId,
-                },
+                communityId: communityId,
             },
         });
 

@@ -10,8 +10,24 @@ const isSolanaPubkey = (str: string): boolean => {
     return /^[1-9A-HJ-NP-Z]{43,44}$/.test(str);
 };
 
+// Helper function to generate URL-safe slug from name
+function generateSlug(name: string): string {
+    return name
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
 const updateCommunitySchema = z.object({
     name: z.string().min(1, 'Community name is required').optional(),
+    slug: z
+        .string()
+        .min(1, 'Slug is required')
+        .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens')
+        .optional(),
     description: z.string().nullable().optional(),
     icon: z
         .union([z.string().url('Icon must be a valid URL'), z.string().startsWith('/'), z.literal(''), z.null()])
@@ -93,10 +109,49 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         // Build update data (only include provided fields)
         const updateData: Record<string, unknown> = {};
+        let newSlug: string | null = null;
+        let oldSlug: string | undefined;
 
+        // Get current community to check old slug
+        const currentCommunity = await db.community.findUnique({
+            where: { id: communityId },
+            select: { slug: true, name: true },
+        });
+
+        if (!currentCommunity) {
+            throw new ApiError('COMMUNITY_NOT_FOUND', 404, 'Community not found');
+        }
+
+        oldSlug = currentCommunity.slug;
+
+        // Handle name changes - auto-generate slug if name changes
         if (validatedData.name !== undefined) {
             updateData.name = validatedData.name;
+            // Auto-generate slug from name if not explicitly provided
+            if (validatedData.slug === undefined) {
+                newSlug = generateSlug(validatedData.name);
+            }
         }
+
+        // Handle explicit slug changes
+        if (validatedData.slug !== undefined) {
+            newSlug = validatedData.slug;
+        }
+
+        // If slug is changing, validate uniqueness
+        if (newSlug && newSlug !== oldSlug) {
+            const existingSlug = await db.community.findUnique({
+                where: { slug: newSlug },
+            });
+
+            if (existingSlug) {
+                throw new ApiError('SLUG_TAKEN', 409, `Slug "${newSlug}" is already taken`);
+            }
+
+            updateData.slug = newSlug;
+            console.log('[PATCH Community] Slug changed:', { old: oldSlug, new: newSlug });
+        }
+
         if (validatedData.description !== undefined) {
             updateData.description = validatedData.description;
         }
