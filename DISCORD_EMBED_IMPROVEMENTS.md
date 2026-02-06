@@ -3,6 +3,7 @@
 **Date:** February 5, 2026  
 **Status:** ✅ Complete  
 **Files Updated:**
+
 - [apps/web/src/lib/utils/event-embed-helpers.ts](apps/web/src/lib/utils/event-embed-helpers.ts)
 - [apps/web/src/app/api/events/[eventId]/announce/route.ts](apps/web/src/app/api/events/[eventId]/announce/route.ts)
 
@@ -13,6 +14,7 @@
 Improved Discord announcement embeds to match a professional event announcement format with better structured information display and social link integration.
 
 ### Previous Issues
+
 1. ❌ Missing social links section (Website, Telegram, Discord, Twitter)
 2. ❌ Requirements not clearly formatted for entry verification
 3. ❌ No distinction between "To Enter" section and requirements details
@@ -74,6 +76,7 @@ TIMESTAMP: Current date/time
 ## Key Improvements
 
 ### 1. **Social Links Section** 🔗
+
 - Automatically pulled from `community.socials` JSON field
 - Displays: Website, Twitter, Discord, Instagram
 - URL sanitization (auto-adds `https://` if missing)
@@ -81,25 +84,29 @@ TIMESTAMP: Current date/time
 
 ```json
 {
-  "name": "🔗 SOLANA NAME SERVICE LINKS",
-  "value": "🔗 [Website](url) • 𝕏 [Twitter](url) • 💬 [Discord](url)"
+    "name": "🔗 SOLANA NAME SERVICE LINKS",
+    "value": "🔗 [Website](url) • 𝕏 [Twitter](url) • 💬 [Discord](url)"
 }
 ```
 
 ### 2. **Better Requirements Display**
+
 Two-part requirement system:
 
 **"TO ENTER:" Section** - What users need to verify
+
 - Shows semantic emoji for each requirement type
 - Clear list of verification needs
 - Example: `✅ Discord Member`, `💎 Token Holder`, `🖼️ NFT Holder`
 
 **"REQUIREMENTS:" Section** - Checkmarked details
+
 - Checkmark indicator (✅) before each requirement
 - Full semantic emoji + requirement name
 - Helps users understand what they need
 
 ### 3. **Improved EventData Interface**
+
 Added community data support:
 
 ```typescript
@@ -116,8 +123,10 @@ interface EventData {
 
 ### 4. **Helper Functions Added**
 
-#### `formatRequirementName(req)` 
+#### `formatRequirementName(req)`
+
 Converts requirement types to readable names:
+
 - `DISCORD_MEMBER` → "Discord Member"
 - `TOKEN_BALANCE` → "Token Holder"
 - `NFT_HOLDER` → "NFT Holder"
@@ -125,13 +134,17 @@ Converts requirement types to readable names:
 - And more...
 
 #### `getSelectionModeDisplay(mode)`
+
 Formats selection mode:
+
 - `RANDOM` → "🎲 Random Draw"
 - `FCFS` → "⚡ First-Come-First-Served"
 - `MANUAL` → "✋ Manual Selection"
 
 #### `sanitizeUrl(url)`
+
 Ensures Discord-compatible URLs:
+
 - Adds `https://` if missing protocol
 - Handles Discord invite links (`discord://`)
 - Returns empty string for invalid URLs
@@ -143,6 +156,7 @@ Ensures Discord-compatible URLs:
 ### How Images Work
 
 **Image URL Conversion:**
+
 ```typescript
 if (event.imageUrl) {
     if (event.imageUrl.startsWith('/')) {
@@ -156,6 +170,7 @@ if (event.imageUrl) {
 ```
 
 **Image in Embed:**
+
 ```json
 {
     "image": {
@@ -167,15 +182,15 @@ if (event.imageUrl) {
 ### For Image Uploads to Work
 
 1. **Relative Paths**: Store `imageUrl` as `/public/uploads/events/filename.png`
-   - Settings: `APP_BASE_URL` or `NEXT_PUBLIC_APP_BASE_URL` env variable
+    - Settings: `APP_BASE_URL` or `NEXT_PUBLIC_APP_BASE_URL` env variable
 
 2. **External URLs**: Store full `https://cdn.example.com/image.png`
-   - Works directly without conversion
+    - Works directly without conversion
 
 3. **Discord Requirements**:
-   - Image must be publicly accessible
-   - URL must be HTTP/HTTPS
-   - Content must match Discord MIME types (image/png, image/jpeg, etc.)
+    - Image must be publicly accessible
+    - URL must be HTTP/HTTPS
+    - Content must match Discord MIME types (image/png, image/jpeg, etc.)
 
 ---
 
@@ -193,8 +208,8 @@ const event = await db.event.findUnique({
             select: {
                 id: true,
                 slug: true,
-                name: true,           // ← NEW
-                socials: true,         // ← NEW
+                name: true, // ← NEW
+                socials: true, // ← NEW
                 guildId: true,
                 discordAnnouncementChannelId: true,
             },
@@ -214,12 +229,14 @@ const event = await db.event.findUnique({
 Colors are determined by event urgency, then event type:
 
 **Urgency (overrides type color):**
+
 - 🔴 **1 day or less** → `#ff4444` (Critical Red)
 - 🟠 **2-3 days** → `#ff8844` (Urgent Orange)
 - 🟡 **4-7 days** → `#ffaa44` (Limited Time Yellow)
 - 🟢 **8+ days** → Event type color (Normal)
 
 **Event Type Colors (if no urgency override):**
+
 - WHITELIST: `#00ff41` (Radioactive Green)
 - PRESALE: `#00d4ff` (Electric Blue)
 - GIVEAWAY: `#ff6b9d` (Pink/Magenta)
@@ -244,11 +261,7 @@ const event = await db.event.findUnique({
 });
 
 // Build embed (returns plain JSON, no discord.js dependency)
-const embed = buildProfessionalEventEmbed(
-    event as EventData,
-    event.community.slug,
-    'https://app.droplabz.com'
-);
+const embed = buildProfessionalEventEmbed(event as EventData, event.community.slug, 'https://app.droplabz.com');
 
 // Send to Discord via bot API
 const response = await fetch('http://bot:3001/announce', {
@@ -285,11 +298,13 @@ const response = await fetch('http://bot:3001/announce', {
 ## Migration Notes
 
 ### No Breaking Changes
+
 - ✅ All existing function signatures compatible
 - ✅ Event queries need `community` data included (already updated in announce route)
 - ✅ Graceful fallbacks for missing data (socials, image, etc.)
 
 ### Backward Compatibility
+
 - Embeds still work if community data is missing (socials section just won't display)
 - Images still work with relative or absolute paths
 - All requirement types still display even if new type mapping is added
@@ -299,30 +314,30 @@ const response = await fetch('http://bot:3001/announce', {
 ## Future Enhancements
 
 1. **Mint Details Section**
-   - Add `mintDate`, `mintSupply`, `mintPrice` to Event model
-   - Display in "MINT DETAILS" section
+    - Add `mintDate`, `mintSupply`, `mintPrice` to Event model
+    - Display in "MINT DETAILS" section
 
 2. **Twitter Follower Count**
-   - Fetch from Twitter API
-   - Display as `𝕏 Twitter (12.5K followers)`
+    - Fetch from Twitter API
+    - Display as `𝕏 Twitter (12.5K followers)`
 
 3. **Customizable Embed Backgrounds**
-   - Support thumbnail images
-   - Add accent colors per community
+    - Support thumbnail images
+    - Add accent colors per community
 
 4. **Rich Requirement Descriptions**
-   - Store human-readable descriptions in Requirement.config
-   - Display more context about why requirement exists
+    - Store human-readable descriptions in Requirement.config
+    - Display more context about why requirement exists
 
 ---
 
 ## Files Summary
 
-| File | Changes |
-|------|---------|
-| [event-embed-helpers.ts](apps/web/src/lib/utils/event-embed-helpers.ts) | Complete rewrite of `buildProfessionalEventEmbed()` + new helper functions |
-| [announce/route.ts](apps/web/src/app/api/events/[eventId]/announce/route.ts) | Added `name` and `socials` to community select query |
-| [DISCORD_EMBED_IMPROVEMENTS.md](DISCORD_EMBED_IMPROVEMENTS.md) | This file - documentation |
+| File                                                                         | Changes                                                                    |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [event-embed-helpers.ts](apps/web/src/lib/utils/event-embed-helpers.ts)      | Complete rewrite of `buildProfessionalEventEmbed()` + new helper functions |
+| [announce/route.ts](apps/web/src/app/api/events/[eventId]/announce/route.ts) | Added `name` and `socials` to community select query                       |
+| [DISCORD_EMBED_IMPROVEMENTS.md](DISCORD_EMBED_IMPROVEMENTS.md)               | This file - documentation                                                  |
 
 ---
 

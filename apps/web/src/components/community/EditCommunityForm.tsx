@@ -178,28 +178,30 @@ export function EditCommunityForm({ community, onSuccess }: EditCommunityFormPro
                 />
 
                 {/* Banner Upload */}
-                <div
-                    onDragOver={handleDragOver}
-                    onDrop={e => handleDrop(e, 'banner')}
-                    className="w-full border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-[#00d4ff] transition cursor-pointer"
-                >
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={e => {
-                            const file = e.target.files?.[0];
-                            if (file) handleFileUpload(file, 'banner');
-                        }}
-                        className="hidden"
-                        id="banner-upload"
-                    />
-                    <label htmlFor="banner-upload" className="cursor-pointer block">
-                        <p className="text-gray-300 mb-1">
-                            {uploading ? 'Uploading...' : 'Drag & drop banner or click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500">PNG, JPG, WebP (max 5MB)</p>
-                    </label>
-                </div>
+                {!formData.banner && (
+                    <div
+                        onDragOver={handleDragOver}
+                        onDrop={e => handleDrop(e, 'banner')}
+                        className="w-full border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-[#00d4ff] transition cursor-pointer"
+                    >
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFileUpload(file, 'banner');
+                            }}
+                            className="hidden"
+                            id="banner-upload"
+                        />
+                        <label htmlFor="banner-upload" className="cursor-pointer block">
+                            <p className="text-gray-300 mb-1">
+                                {uploading ? 'Uploading...' : 'Drag & drop banner or click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500">PNG, JPG, WebP (max 5MB)</p>
+                        </label>
+                    </div>
+                )}
                 {formData.banner && (
                     <div className="mt-4">
                         <div className="flex items-center justify-between mb-2">
@@ -235,28 +237,30 @@ export function EditCommunityForm({ community, onSuccess }: EditCommunityFormPro
                 />
 
                 {/* Logo Upload */}
-                <div
-                    onDragOver={handleDragOver}
-                    onDrop={e => handleDrop(e, 'icon')}
-                    className="w-full border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-[#00d4ff] transition cursor-pointer"
-                >
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={e => {
-                            const file = e.target.files?.[0];
-                            if (file) handleFileUpload(file, 'icon');
-                        }}
-                        className="hidden"
-                        id="logo-upload"
-                    />
-                    <label htmlFor="logo-upload" className="cursor-pointer block">
-                        <p className="text-gray-300 mb-1">
-                            {uploading ? 'Uploading...' : 'Drag & drop logo or click to upload'}
-                        </p>
-                        <p className="text-xs text-gray-500">PNG, JPG, WebP (max 5MB)</p>
-                    </label>
-                </div>
+                {!formData.icon && (
+                    <div
+                        onDragOver={handleDragOver}
+                        onDrop={e => handleDrop(e, 'icon')}
+                        className="w-full border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-[#00d4ff] transition cursor-pointer"
+                    >
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFileUpload(file, 'icon');
+                            }}
+                            className="hidden"
+                            id="logo-upload"
+                        />
+                        <label htmlFor="logo-upload" className="cursor-pointer block">
+                            <p className="text-gray-300 mb-1">
+                                {uploading ? 'Uploading...' : 'Drag & drop logo or click to upload'}
+                            </p>
+                            <p className="text-xs text-gray-500">PNG, JPG, WebP (max 5MB)</p>
+                        </label>
+                    </div>
+                )}
                 {formData.icon && (
                     <div className="mt-4">
                         <div className="flex items-center justify-between mb-2">
