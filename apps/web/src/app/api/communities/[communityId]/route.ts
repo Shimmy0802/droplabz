@@ -86,7 +86,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         await requireCommunityAdmin(communityId);
 
         const body = await request.json();
+        console.log('[PATCH Community] Request body:', JSON.stringify(body, null, 2));
+        
         const validatedData = updateCommunitySchema.parse(body);
+        console.log('[PATCH Community] Validation successful');
 
         // Build update data (only include provided fields)
         const updateData: Record<string, unknown> = {};
@@ -144,9 +147,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         console.error('[API Error] PATCH /api/communities/[communityId]:', error);
 
         if (error instanceof z.ZodError) {
+            console.error('[Zod Validation Error] Issues:', JSON.stringify(error.issues, null, 2));
             return NextResponse.json(
                 {
                     error: 'VALIDATION_ERROR',
+                    message: 'Invalid request data',
                     issues: error.issues,
                 },
                 { status: 400 },
