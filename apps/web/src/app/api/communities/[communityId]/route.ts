@@ -20,7 +20,7 @@ const updateCommunitySchema = z.object({
         .union([z.string().url('Banner must be a valid URL'), z.string().startsWith('/'), z.literal(''), z.null()])
         .optional(),
     nftMintAddress: z.string().refine(isSolanaPubkey, 'Invalid Solana public key format').nullable().optional(),
-    categories: z.array(z.enum(['NFT', 'Gaming', 'DeFi', 'DAO', 'Community'])).optional(),
+    categories: z.array(z.enum(['NFT_PROJECT', 'Gaming', 'DeFi', 'DAO', 'Community', 'NFT'])).optional(),
     socials: z
         .object({
             twitter: z.union([z.string().url('Twitter must be a valid URL'), z.literal(''), z.null()]).optional(),
@@ -87,7 +87,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         const body = await request.json();
         console.log('[PATCH Community] Request body:', JSON.stringify(body, null, 2));
-        
+
         const validatedData = updateCommunitySchema.parse(body);
         console.log('[PATCH Community] Validation successful');
 
