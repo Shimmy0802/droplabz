@@ -14,57 +14,19 @@ const updateCommunitySchema = z.object({
     name: z.string().min(1, 'Community name is required').optional(),
     description: z.string().nullable().optional(),
     icon: z
-        .string()
-        .refine(
-            val => !val || val.startsWith('/') || val.startsWith('http://') || val.startsWith('https://'),
-            'Icon must be a valid URL or file path',
-        )
-        .nullable()
+        .union([z.string().url('Icon must be a valid URL'), z.string().startsWith('/'), z.literal(''), z.null()])
         .optional(),
     banner: z
-        .string()
-        .refine(
-            val => !val || val.startsWith('/') || val.startsWith('http://') || val.startsWith('https://'),
-            'Banner must be a valid URL or file path',
-        )
-        .nullable()
+        .union([z.string().url('Banner must be a valid URL'), z.string().startsWith('/'), z.literal(''), z.null()])
         .optional(),
     nftMintAddress: z.string().refine(isSolanaPubkey, 'Invalid Solana public key format').nullable().optional(),
     categories: z.array(z.enum(['NFT', 'Gaming', 'DeFi', 'DAO', 'Community'])).optional(),
     socials: z
         .object({
-            twitter: z
-                .string()
-                .refine(
-                    val => !val || val.startsWith('http://') || val.startsWith('https://'),
-                    'Twitter must be a valid URL',
-                )
-                .nullable()
-                .optional(),
-            discord: z
-                .string()
-                .refine(
-                    val => !val || val.startsWith('http://') || val.startsWith('https://'),
-                    'Discord must be a valid URL',
-                )
-                .nullable()
-                .optional(),
-            website: z
-                .string()
-                .refine(
-                    val => !val || val.startsWith('http://') || val.startsWith('https://'),
-                    'Website must be a valid URL',
-                )
-                .nullable()
-                .optional(),
-            instagram: z
-                .string()
-                .refine(
-                    val => !val || val.startsWith('http://') || val.startsWith('https://'),
-                    'Instagram must be a valid URL',
-                )
-                .nullable()
-                .optional(),
+            twitter: z.union([z.string().url('Twitter must be a valid URL'), z.literal(''), z.null()]).optional(),
+            discord: z.union([z.string().url('Discord must be a valid URL'), z.literal(''), z.null()]).optional(),
+            website: z.union([z.string().url('Website must be a valid URL'), z.literal(''), z.null()]).optional(),
+            instagram: z.union([z.string().url('Instagram must be a valid URL'), z.literal(''), z.null()]).optional(),
         })
         .nullable()
         .optional(),

@@ -6,6 +6,12 @@ import { z } from 'zod';
 const querySchema = z.object({
     limit: z.string().optional().default('20').transform(Number),
     offset: z.string().optional().default('0').transform(Number),
+    page: z
+        .string()
+        .optional()
+        .transform(val => (val ? Number(val) : undefined)),
+    filter: z.string().optional(),
+    search: z.string().optional(),
     userId: z.string().optional(),
     role: z.enum(['OWNER', 'ADMIN', 'MODERATOR', 'MEMBER']).optional(),
 });
@@ -22,17 +28,35 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
 
         // Parse query params
         const searchParams = req.nextUrl.searchParams;
-        const { limit, offset, userId, role } = querySchema.parse({
+        const { limit, offset, page, filter, search, userId, role } = querySchema.parse({
             limit: searchParams.get('limit'),
             offset: searchParams.get('offset'),
+            page: searchParams.get('page'),
+            filter: searchParams.get('filter'),
+            search: searchParams.get('search'),
             userId: searchParams.get('userId'),
             role: searchParams.get('role'),
         });
+
+        // Calculate offset from page if provided
+        const actualOffset = page ? (page - 1) * limit : offset;
 
         // Build where clause
         const where: any = { communityId };
         if (userId) where.userId = userId;
         if (role) where.role = role;
+
+        // Handle filter parameter
+        if (filter && filter !== 'ALL') {
+            where.role = filter as any;
+        }
+
+        // Handle search parameter
+        if (search) {
+            where.user = {
+                OR: [{ email: { contains: search, mode: 'insensitive' } }, { discordId: { contains: search } }],
+            };
+        }
 
         // Get members
         const members = await db.communityMember.findMany({
@@ -48,7 +72,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
             },
             orderBy: { createdAt: 'desc' },
             take: limit,
-            skip: offset,
+            skip: actualOffset,
         });
 
         const total = await db.communityMember.count({ where });
@@ -58,8 +82,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
             pagination: {
                 total,
                 limit,
-                offset,
-                hasMore: offset + limit < total,
+                offset: actualOffset,
+                page: page || Math.floor(actualOffset / limit) + 1,
+                hasMore: actualOffset + limit < total,
             },
         });
     } catch (error) {
