@@ -83,7 +83,10 @@ export function JoinCommunityButton({
     // Already a member
     if (isMember) {
         return (
-            <button disabled className="px-6 py-3 bg-gray-700/50 text-gray-300 rounded-lg font-semibold cursor-not-allowed border border-gray-600">
+            <button
+                disabled
+                className="px-6 py-3 bg-gray-700/50 text-gray-300 rounded-lg font-semibold cursor-not-allowed border border-gray-600"
+            >
                 ✓ Member
             </button>
         );

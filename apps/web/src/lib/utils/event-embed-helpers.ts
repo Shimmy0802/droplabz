@@ -225,7 +225,7 @@ export function buildProfessionalEventEmbed(
     };
     const typeEmoji = typeEmojiMap[event.type] || '🎯';
 
-    // Get urgency badge  
+    // Get urgency badge
     const urgencyBadge = getUrgencyBadge(deadline);
     let embedColor = urgencyBadge.color;
     if (daysLeft > 7) {
@@ -247,7 +247,7 @@ export function buildProfessionalEventEmbed(
     // Build "To Enter:" section with requirement bullets
     let toEnterText = '✅ No special requirements - open to all';
     if (event.requirements && event.requirements.length > 0) {
-        const reqLines = event.requirements.map((req) => {
+        const reqLines = event.requirements.map(req => {
             const emoji = getRequirementEmoji(req.type);
             const displayName = formatRequirementName(req);
             return `• ${emoji} ${displayName}`;
@@ -268,7 +268,7 @@ export function buildProfessionalEventEmbed(
     // Section: Requirements with checkmarks
     const requirementsLines: string[] = [];
     if (event.requirements && event.requirements.length > 0) {
-        event.requirements.forEach((req) => {
+        event.requirements.forEach(req => {
             const emoji = getRequirementEmoji(req.type);
             const displayName = formatRequirementName(req);
             requirementsLines.push(`☑️ ${emoji} ${displayName}`);
@@ -282,7 +282,7 @@ export function buildProfessionalEventEmbed(
 
     // Section: Links (Website, Telegram, Discord)
     const socials = event.community?.socials as Record<string, string | null> | undefined;
-    if (socials && Object.values(socials).some((v) => v)) {
+    if (socials && Object.values(socials).some(v => v)) {
         const linkLines: string[] = [];
 
         if (socials.website) {

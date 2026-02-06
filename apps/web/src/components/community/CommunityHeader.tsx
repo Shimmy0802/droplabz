@@ -31,7 +31,15 @@ interface CommunityHeaderProps {
     onJoinSuccess?: () => void;
 }
 
-export function CommunityHeader({ community, memberCount, reviewCount, isAdmin, isMember, isAuthenticated, onJoinSuccess }: CommunityHeaderProps) {
+export function CommunityHeader({
+    community,
+    memberCount,
+    reviewCount,
+    isAdmin,
+    isMember,
+    isAuthenticated,
+    onJoinSuccess,
+}: CommunityHeaderProps) {
     return (
         <div className="bg-gradient-to-br from-[#111528] to-[#0a0e27] border border-[rgba(0,255,65,0.2)] rounded-lg overflow-hidden">
             {/* Banner/Cover */}
@@ -60,7 +68,7 @@ export function CommunityHeader({ community, memberCount, reviewCount, isAdmin, 
                             onJoinSuccess={onJoinSuccess}
                         />
                     )}
-                    
+
                     {/* Social Links */}
                     <SocialLinks
                         socials={community.socials}

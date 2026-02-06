@@ -24,10 +24,7 @@ export async function POST(req: NextRequest) {
 
         // Check if Cloudinary is configured
         if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
-            return NextResponse.json(
-                { error: 'Image upload not configured. Contact administrator.' },
-                { status: 503 },
-            );
+            return NextResponse.json({ error: 'Image upload not configured. Contact administrator.' }, { status: 503 });
         }
 
         const formData = await req.formData();
