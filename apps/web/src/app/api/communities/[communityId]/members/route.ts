@@ -16,11 +16,9 @@ const querySchema = z.object({
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ communityId: string }> }) {
     try {
-        const user = await requireAuth();
+        // Public endpoint - allows anyone to view members
+        // If userId is provided, returns specific member info
         const { communityId } = await params;
-
-        // Verify community access
-        await requireCommunityAdmin(communityId);
 
         // Parse query params
         const searchParams = req.nextUrl.searchParams;

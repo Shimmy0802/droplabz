@@ -1,22 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/middleware';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import { v2 as cloudinary } from 'cloudinary';
 
-const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads');
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 /**
  * POST /api/upload
- * Upload image files for community banners and logos
+ * Upload image files to Cloudinary for community banners and logos
  * Returns the public URL of the uploaded file
  */
 export async function POST(req: NextRequest) {
     try {
         // Require authentication
         await requireAuth();
+
+        // Check if Cloudinary is configured
+        if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+            return NextResponse.json(
+                { error: 'Image upload not configured. Contact administrator.' },
+                { status: 503 },
+            );
+        }
 
         const formData = await req.formData();
         const file = formData.get('file') as File;
@@ -38,34 +50,29 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'File size exceeds 5MB limit' }, { status: 400 });
         }
 
-        // Create upload directory if it doesn't exist
-        if (!existsSync(UPLOAD_DIR)) {
-            await mkdir(UPLOAD_DIR, { recursive: true });
-        }
-
-        // Generate unique filename
-        const timestamp = Date.now();
-        const random = Math.random().toString(36).substring(2, 8);
-        const ext = file.name.split('.').pop();
-        const filename = `${timestamp}-${random}.${ext}`;
-        const filepath = join(UPLOAD_DIR, filename);
-
-        // Convert File to Buffer and write to disk
+        // Convert File to base64 for Cloudinary upload
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
-        await writeFile(filepath, buffer);
+        const base64 = buffer.toString('base64');
+        const dataUri = `data:${file.type};base64,${base64}`;
 
-        // Return public URL
-        const publicUrl = `/uploads/${filename}`;
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(dataUri, {
+            folder: 'droplabz',
+            resource_type: 'image',
+        });
 
         return NextResponse.json({
-            url: publicUrl,
-            filename,
+            url: result.secure_url,
+            filename: result.public_id,
             size: file.size,
             type: file.type,
         });
     } catch (error) {
         console.error('Error uploading file:', error);
-        return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+        return NextResponse.json(
+            { error: 'Failed to upload file', message: error instanceof Error ? error.message : 'Unknown error' },
+            { status: 500 },
+        );
     }
 }
