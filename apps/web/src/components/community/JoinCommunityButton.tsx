@@ -68,34 +68,37 @@ export function JoinCommunityButton({
         return null;
     }
 
-    // Already a member
-    if (isMember) {
+    // Success state (show before updating to member)
+    if (success) {
         return (
-            <button disabled className="px-6 py-3 bg-gray-700 text-gray-400 rounded font-semibold cursor-not-allowed">
-                ✓ Already a Member
-            </button>
+            <div className="text-center">
+                <button disabled className="px-6 py-3 bg-[#00ff41] text-[#0a0e27] rounded-lg font-semibold shadow-lg">
+                    ✓ Joined Successfully!
+                </button>
+                <p className="mt-1 text-xs text-[#00ff41]">Welcome to the community!</p>
+            </div>
         );
     }
 
-    // Success state
-    if (success) {
+    // Already a member
+    if (isMember) {
         return (
-            <button disabled className="px-6 py-3 bg-[#00ff41] text-[#0a0e27] rounded font-semibold">
-                ✓ Joined Successfully!
+            <button disabled className="px-6 py-3 bg-gray-700/50 text-gray-300 rounded-lg font-semibold cursor-not-allowed border border-gray-600">
+                ✓ Member
             </button>
         );
     }
 
     return (
-        <div>
+        <div className="text-center">
             <button
                 onClick={handleJoin}
                 disabled={joining}
-                className="px-6 py-3 bg-[#00ff41] hover:bg-[#00dd33] text-[#0a0e27] rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-[#00ff41] hover:bg-[#00dd33] text-[#0a0e27] rounded-lg font-semibold transition shadow-lg hover:shadow-[#00ff41]/50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                {joining ? 'Joining...' : status === 'unauthenticated' ? 'Sign in to Join' : 'Join Community'}
+                {joining ? 'Joining...' : !isAuthenticated ? 'Sign in to Join' : 'Join Community'}
             </button>
-            {error && <p className="mt-2 text-sm text-red-400 max-w-xs">{error}</p>}
+            {error && <p className="mt-1 text-xs text-red-400 max-w-xs">{error}</p>}
         </div>
     );
 }

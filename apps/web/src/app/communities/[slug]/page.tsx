@@ -245,25 +245,16 @@ export default function CommunityPage({ params }: { params: Promise<{ slug: stri
         <div className="min-h-full">
             <div className="h-full px-4 sm:px-6 lg:px-8 py-6 overflow-y-auto">
                 <div className="max-w-7xl mx-auto space-y-6">
-                    {/* Community Header */}
+                    {/* Community Header with Join Button */}
                     <CommunityHeader
                         community={community}
                         memberCount={stats.memberCount}
                         reviewCount={stats.reviewCount}
+                        isAdmin={isAdmin}
+                        isMember={isMember}
+                        isAuthenticated={!!session}
+                        onJoinSuccess={() => loadCommunityData(community.slug)}
                     />
-
-                    {/* Join Community Button */}
-                    {!isAdmin && (
-                        <div className="flex justify-center">
-                            <JoinCommunityButton
-                                communityId={community.id}
-                                isAuthenticated={!!session}
-                                isMember={isMember}
-                                isListed={community.isListed || false}
-                                onJoinSuccess={() => loadCommunityData(community.slug)}
-                            />
-                        </div>
-                    )}
 
                     {/* Action Buttons */}
                     <ActionButtons discordUrl={community.socials?.discord} websiteUrl={community.socials?.website} />

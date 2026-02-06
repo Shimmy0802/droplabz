@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { SocialLinks } from './SocialLinks';
 import { CategoriesBadges } from '@/components/CategoryBadge';
+import { JoinCommunityButton } from './JoinCommunityButton';
 
 interface CommunityHeaderProps {
     community: {
@@ -14,6 +15,7 @@ interface CommunityHeaderProps {
         rating?: number | null;
         nftMintAddress?: string | null;
         isVerified?: boolean;
+        isListed?: boolean;
         socials?: {
             twitter?: string | null;
             discord?: string | null;
@@ -23,9 +25,13 @@ interface CommunityHeaderProps {
     };
     memberCount: number;
     reviewCount: number;
+    isAdmin?: boolean;
+    isMember?: boolean;
+    isAuthenticated?: boolean;
+    onJoinSuccess?: () => void;
 }
 
-export function CommunityHeader({ community, memberCount, reviewCount }: CommunityHeaderProps) {
+export function CommunityHeader({ community, memberCount, reviewCount, isAdmin, isMember, isAuthenticated, onJoinSuccess }: CommunityHeaderProps) {
     return (
         <div className="bg-gradient-to-br from-[#111528] to-[#0a0e27] border border-[rgba(0,255,65,0.2)] rounded-lg overflow-hidden">
             {/* Banner/Cover */}
@@ -42,8 +48,20 @@ export function CommunityHeader({ community, memberCount, reviewCount }: Communi
                     <div className="absolute inset-0 bg-gradient-to-r from-[#1a1f3a]/80 via-[#0f1729]/60 to-[#1a1f3a]/80" />
                 )}
 
-                {/* Social Links in Banner - Top Right */}
-                <div className="absolute top-4 right-6 z-10">
+                {/* Join Button and Social Links - Top Right */}
+                <div className="absolute top-4 right-6 z-10 flex items-center gap-4">
+                    {/* Join Community Button */}
+                    {!isAdmin && (
+                        <JoinCommunityButton
+                            communityId={community.id}
+                            isAuthenticated={isAuthenticated || false}
+                            isMember={isMember || false}
+                            isListed={community.isListed || false}
+                            onJoinSuccess={onJoinSuccess}
+                        />
+                    )}
+                    
+                    {/* Social Links */}
                     <SocialLinks
                         socials={community.socials}
                         className="flex gap-4"
