@@ -23,8 +23,24 @@ export async function POST(req: NextRequest) {
         await requireAuth();
 
         // Check if Cloudinary is configured
-        if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
-            return NextResponse.json({ error: 'Image upload not configured. Contact administrator.' }, { status: 503 });
+        if (
+            !process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+            !process.env.CLOUDINARY_API_KEY ||
+            !process.env.CLOUDINARY_API_SECRET
+        ) {
+            const missing = [];
+            if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) missing.push('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME');
+            if (!process.env.CLOUDINARY_API_KEY) missing.push('CLOUDINARY_API_KEY');
+            if (!process.env.CLOUDINARY_API_SECRET) missing.push('CLOUDINARY_API_SECRET');
+
+            console.error('Missing Cloudinary environment variables:', missing.join(', '));
+            return NextResponse.json(
+                {
+                    error: 'Image upload not configured. Missing environment variables.',
+                    details: process.env.NODE_ENV === 'development' ? missing : undefined,
+                },
+                { status: 503 },
+            );
         }
 
         const formData = await req.formData();
