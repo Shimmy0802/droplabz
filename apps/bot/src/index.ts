@@ -289,10 +289,11 @@ app.post('/verify-server-setup', async (req: Request, res: Response) => {
     }
 });
 
-// Start HTTP server on port 3001 (internal communication)
+// Start HTTP server on port 3001 (accept connections from any network interface)
 const PORT = 3001;
-app.listen(PORT, '127.0.0.1', () => {
-    console.log(`[Bot API] HTTP server listening on http://127.0.0.1:${PORT}`);
+const HOST = '0.0.0.0'; // Listen on all interfaces for external access
+app.listen(PORT, HOST, () => {
+    console.log(`[Bot API] HTTP server listening on http://0.0.0.0:${PORT}`);
 });
 
 client.login(process.env.DISCORD_BOT_TOKEN);

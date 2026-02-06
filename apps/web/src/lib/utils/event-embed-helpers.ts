@@ -64,6 +64,12 @@ export interface EventData {
     _count?: {
         entries: number;
     };
+    community?: {
+        id: string;
+        slug: string;
+        name: string;
+        socials?: Record<string, string | null>;
+    };
 }
 
 /**
@@ -130,44 +136,69 @@ function getCapacityProgressBar(entries: number, maxWinners: number | undefined)
 }
 
 /**
- * ENHANCEMENT 3: Strategic Color Mapping by Urgency
- * Reserve green (#00FF41) for CTAs, use escalating urgency colors
+ * Format requirement type for display
+ * Converts DISCORD_ROLE to "Discord Role Required" etc.
  */
-function getColorByUrgency(daysLeft: number): number {
-    if (daysLeft <= 1) return 0xff4444; // Red - critical
-    if (daysLeft <= 3) return 0xff8844; // Orange - urgent
-    if (daysLeft <= 7) return 0xffaa44; // Yellow - limited time
-    return 0x00d4ff; // Electric blue (DropLabz secondary brand) - normal
-}
-
-/**
- * ENHANCEMENT 8: Event-Type Color Mapping
- * Different colors per event type for visual distinction
- */
-function getColorByEventType(eventType: string): number {
-    const colorMap: Record<string, number> = {
-        WHITELIST: 0x00ff41, // Green
-        PRESALE: 0x00d4ff, // Electric blue
-        GIVEAWAY: 0xff6b9d, // Pink/magenta
-        COLLABORATION: 0xffd700, // Gold
+function formatRequirementName(req: { type: string; config?: any }): string {
+    const typeNames: Record<string, string> = {
+        DISCORD_MEMBER: 'Discord Member',
+        DISCORD_ROLE: 'Discord Role Required',
+        DISCORD_ROLE_REQUIRED: 'Discord Role Required',
+        SOLANA_BALANCE: 'Solana Balance Required',
+        TOKEN_BALANCE: 'Token Holder',
+        NFT_HOLDER: 'NFT Holder',
+        TWITTER_FOLLOW: 'Follow Twitter/X',
+        ALLOWLIST: 'On Allowlist',
+        WHITELIST: 'On Whitelist',
+        POINTS: 'Minimum Points',
+        LEVEL: 'Minimum Level',
+        INVITE: 'Invite Required',
+        CUSTOM: 'Custom Requirement',
     };
-    return colorMap[eventType] || 0x00d4ff; // Default to blue
+
+    return typeNames[req.type] || req.type.replace(/_/g, ' ');
 }
 
 /**
- * Build DRAMATICALLY ENHANCED professional event embed
- * Implements ALL 11 enhancements:
- * 1. Prioritized Prize Pool (moved to second field)
- * 2. Urgency indicators with color-coded badges
- * 3. Strategic color usage (escalating urgency colors, reserve green for CTA)
- * 4. Semantic emoji icons per requirement type
- * 5. Live status indicator in title (🔴 LIVE if ACTIVE)
- * 6. Two-column layout with inline fields
- * 7. Capacity progress bar visualization
- * 8. Event-type color mapping
- * 9. Enhanced CTA with visual emphasis
- * 10. Personalization-ready code structure
- * 11. Image support with absolute URL conversion
+ * Format selection mode for display
+ */
+function getSelectionModeDisplay(mode: string): string {
+    const modeMap: Record<string, string> = {
+        RANDOM: '🎲 Random Draw',
+        FCFS: '⚡ First-Come-First-Served',
+        MANUAL: '✋ Manual Selection',
+    };
+    return modeMap[mode] || mode;
+}
+
+/**
+ * Sanitize URLs for Discord embeds
+ * Ensures proper URL formatting for markdown links
+ */
+function sanitizeUrl(url: string): string {
+    if (!url) return '';
+
+    // If missing protocol, add https://
+    if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('discord://')) {
+        return `https://${url}`;
+    }
+
+    return url;
+}
+
+/**
+ * Build enhanced professional event embed matching reference design
+ *
+ * Format:
+ * - Title with emoji prefix (🏆 Event Name)
+ * - Event description
+ * - "To Enter:" requirements section with verification needs
+ * - "Requirements:" section with checkmarks
+ * - Links section (Website, Telegram, Discord)
+ * - Mint/Event details (date, supply, price)
+ * - Type, # of winners, Ends
+ * - Twitter info
+ * - Event image at bottom
  *
  * Returns plain JSON object (no discord.js dependency)
  */
@@ -180,183 +211,186 @@ export function buildProfessionalEventEmbed(
     const deadline = new Date(event.endAt);
     const now = new Date();
     const timeUntilEnd = deadline.getTime() - now.getTime();
-    const hoursLeft = Math.floor(timeUntilEnd / (1000 * 60 * 60));
     const daysLeft = Math.floor(timeUntilEnd / (1000 * 60 * 60 * 24));
-    const minutesLeft = Math.floor((timeUntilEnd % (1000 * 60 * 60)) / (1000 * 60));
 
-    // ENHANCEMENT 1 & 8: Event type emoji and get base color from event type
+    // Type emoji and color mapping
     const typeEmojiMap: Record<string, string> = {
         WHITELIST: '✅',
         PRESALE: '🚀',
         GIVEAWAY: '🎁',
         COLLABORATION: '🤝',
+        ACCESS: '🔐',
+        AIRDROP: '💨',
+        RAFFLE: '🎰',
     };
     const typeEmoji = typeEmojiMap[event.type] || '🎯';
-    const typeColor = getColorByEventType(event.type);
 
-    // ENHANCEMENT 2: Get urgency badge with color override
+    // Get urgency badge  
     const urgencyBadge = getUrgencyBadge(deadline);
-
-    // ENHANCEMENT 3: Use urgency color, but fallback to type color for normal urgency
     let embedColor = urgencyBadge.color;
     if (daysLeft > 7) {
-        // Normal urgency - use event type color
-        embedColor = typeColor;
+        const colorMap: Record<string, number> = {
+            WHITELIST: 0x00ff41,
+            PRESALE: 0x00d4ff,
+            GIVEAWAY: 0xff6b9d,
+            COLLABORATION: 0xffd700,
+            ACCESS: 0x00d4ff,
+            AIRDROP: 0x00ff41,
+            RAFFLE: 0xff9500,
+        };
+        embedColor = colorMap[event.type] || 0x00d4ff;
     }
 
-    // ENHANCEMENT 5: Live status indicator in title
-    const liveIndicator = event.status === 'ACTIVE' ? ' 🔴 LIVE' : '';
-    const titleText = `${typeEmoji} **${event.title}**${liveIndicator}`;
+    // Build title with emoji
+    const titleText = `${typeEmoji} ${event.title}`;
 
-    // ENHANCEMENT 4: Build requirements section with semantic emoji icons
-    let requirementsText = '✅ Open to all members';
+    // Build "To Enter:" section with requirement bullets
+    let toEnterText = '✅ No special requirements - open to all';
     if (event.requirements && event.requirements.length > 0) {
-        const reqLines = event.requirements.map((req, idx) => {
-            const displayName = req.type
-                .replace(/_/g, ' ')
-                .replace(/required/i, '')
-                .trim();
+        const reqLines = event.requirements.map((req) => {
             const emoji = getRequirementEmoji(req.type);
-            return `  ${idx + 1}. ${emoji} ${displayName}`;
+            const displayName = formatRequirementName(req);
+            return `• ${emoji} ${displayName}`;
         });
-        requirementsText = reqLines.join('\n');
+        toEnterText = reqLines.join('\n');
     }
 
-    // Entry count - eye-catching
-    const entryCount = event._count?.entries || 0;
-
-    // ENHANCEMENT 7: Capacity progress bar
-    const progressBar = getCapacityProgressBar(entryCount, event.maxWinners);
-
-    // Countdown text with urgency emoji
-    let countdownText = '';
-    if (daysLeft > 0) {
-        countdownText = `⏳ **${daysLeft}d ${hoursLeft % 24}h** remaining`;
-    } else if (hoursLeft > 0) {
-        countdownText = `⏳ **${hoursLeft}h ${minutesLeft}m** remaining`;
-    } else if (minutesLeft > 0) {
-        countdownText = `⏳ **${minutesLeft}m** remaining ${urgencyBadge.emoji}`;
-    } else {
-        countdownText = '🔴 Event ended';
-    }
-
-    // Selection mode - with emoji
-    let selectionDisplay = '🎲 Random Draw';
-    if (event.selectionMode === 'FCFS') {
-        selectionDisplay = '⚡ First-Come-First-Served';
-    } else if (event.selectionMode === 'MANUAL') {
-        selectionDisplay = '✋ Manual Selection';
-    }
-
-    // Detailed timestamp formatting
-    const dateStr = deadline.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-    const timeStr = deadline.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZoneName: 'short',
-    });
-
-    // Visual separator
-    const separator = '━━━━━━━━━━━━━━━━━━━━━━━━━━';
-
-    // ENHANCEMENT 6: Two-column layout with inline fields and strategic reorganization
+    // Build fields array
     const fields: DiscordEmbed['fields'] = [];
 
-    // SECTION 1: PRIZE POOL (ENHANCEMENT 1: Prioritized to second position in display order)
-    if (event.prize) {
+    // Section: "To Enter:"
+    fields.push({
+        name: 'To Enter:',
+        value: toEnterText,
+        inline: false,
+    });
+
+    // Section: Requirements with checkmarks
+    const requirementsLines: string[] = [];
+    if (event.requirements && event.requirements.length > 0) {
+        event.requirements.forEach((req) => {
+            const emoji = getRequirementEmoji(req.type);
+            const displayName = formatRequirementName(req);
+            requirementsLines.push(`☑️ ${emoji} ${displayName}`);
+        });
         fields.push({
-            name: '🎁 PRIZE POOL',
-            value: `**${event.prize}**`,
+            name: 'Requirements:',
+            value: requirementsLines.join('\n'),
             inline: false,
         });
     }
 
-    // SECTION 2: DEADLINE WITH URGENCY (PROMINENT)
-    fields.push({
-        name: `📅 ${urgencyBadge.emoji} DEADLINE - ${urgencyBadge.text}`,
-        value: `**${dateStr}** at **${timeStr}**\n${countdownText}`,
-        inline: false,
+    // Section: Links (Website, Telegram, Discord)
+    const socials = event.community?.socials as Record<string, string | null> | undefined;
+    if (socials && Object.values(socials).some((v) => v)) {
+        const linkLines: string[] = [];
+
+        if (socials.website) {
+            linkLines.push(`🔗 [Website](${sanitizeUrl(socials.website)})`);
+        }
+        if (socials.telegram) {
+            linkLines.push(`📱 [Telegram](${sanitizeUrl(socials.telegram)})`);
+        }
+        if (socials.discord) {
+            linkLines.push(`💬 [Discord](${sanitizeUrl(socials.discord)})`);
+        }
+        if (socials.twitter) {
+            linkLines.push(`𝕏 [Twitter](${sanitizeUrl(socials.twitter)})`);
+        }
+
+        if (linkLines.length > 0) {
+            fields.push({
+                name: `${event.community?.name || 'Community'} Links 🔗`,
+                value: linkLines.join('\n'),
+                inline: false,
+            });
+        }
+    }
+
+    // Section: Mint Details (if presale)
+    if (event.type === 'PRESALE') {
+        fields.push({
+            name: 'Mint Date:',
+            value: 'TBD',
+            inline: true,
+        });
+        fields.push({
+            name: 'Mint supply:',
+            value: 'TBD',
+            inline: true,
+        });
+        fields.push({
+            name: 'Mint price:',
+            value: 'TBD',
+            inline: true,
+        });
+    }
+
+    // Section: Event details (Type, Winners, Ends)
+    const endDate = deadline.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+    const endTime = deadline.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
     });
 
-    // SECTION 3: SELECTION & CAPACITY (TWO-COLUMN LAYOUT)
     fields.push({
-        name: '🏆 WINNERS',
-        value: `\`${event.maxWinners || 1}\` spots`,
+        name: 'Type:',
+        value: event.type === 'RAFFLE' ? 'Raffle' : event.type,
+        inline: true,
+    });
+    fields.push({
+        name: '# of winners:',
+        value: `${event.maxWinners || 1}`,
+        inline: true,
+    });
+    fields.push({
+        name: 'Ends:',
+        value: `${endDate} ${endTime}`,
         inline: true,
     });
 
-    fields.push({
-        name: '⚙️ SELECTION',
-        value: selectionDisplay,
-        inline: true,
-    });
+    // Section: Twitter info (if available)
+    if (socials?.twitter) {
+        // Extract handle from URL for display
+        const twitterUrl = sanitizeUrl(socials.twitter);
+        const twitterHandle = twitterUrl.split('/').pop() || 'Twitter';
+        fields.push({
+            name: 'Twitter:',
+            value: `[@${twitterHandle}](${twitterUrl})`,
+            inline: false,
+        });
+    }
 
-    // SECTION 4: PARTICIPATION PROGRESS (TWO-COLUMN WITH PROGRESS BAR)
+    // CTA button text (displayed with image)
     fields.push({
-        name: '📊 PARTICIPATION',
-        value: progressBar,
+        name: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+        value: `**[→ CLICK HERE TO ENTER ←](${eventUrl})**\n\n*One entry per wallet • Results announced at close*`,
         inline: false,
     });
 
-    // SECTION 5: REQUIREMENTS WITH SEMANTIC EMOJIS
-    fields.push({
-        name: '🔐 REQUIREMENTS TO ENTER',
-        value: requirementsText,
-        inline: false,
-    });
-
-    // VISUAL SEPARATOR
-    fields.push({
-        name: separator,
-        value: '\u200b',
-        inline: false,
-    });
-
-    // ENHANCEMENT 9: Enhanced CTA with visual emphasis and surrounding emojis
-    // ENHANCEMENT 10: Code structure is ready for future personalization (e.g., user status field can be added here)
-    fields.push({
-        name: '🚀 HOW TO JOIN',
-        value: [
-            '1️⃣ **Click the link below** to open event',
-            '2️⃣ **Connect** your Solana wallet',
-            '3️⃣ **Verify requirements** are met',
-            '4️⃣ **Submit** your entry',
-            '',
-            `✨ **[→ ENTER EVENT NOW ←](${eventUrl})** ✨`,
-            '',
-            '*One entry per wallet. Results announced upon close.*',
-        ].join('\n'),
-        inline: false,
-    });
-
-    // ENHANCEMENT 11: Image support with absolute URL conversion
+    // Process image URL - do NOT include if from local uploads
     let imageUrl: string | null = null;
-    if (event.imageUrl) {
-        if (event.imageUrl.startsWith('/')) {
-            // Relative path - convert to absolute URL
-            const appBaseUrl =
-                process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_APP_BASE_URL || 'http://localhost:3000';
-            imageUrl = `${appBaseUrl}${event.imageUrl}`;
-        } else if (event.imageUrl.startsWith('http://') || event.imageUrl.startsWith('https://')) {
-            // Already absolute - use as-is
+    if (event.imageUrl && !event.imageUrl.includes('/uploads/')) {
+        // Only use external images, not local uploads
+        if (event.imageUrl.startsWith('http://') || event.imageUrl.startsWith('https://')) {
             imageUrl = event.imageUrl;
         }
-        // Ignore invalid URLs (not http(s) and not relative path)
     }
 
     const embed: DiscordEmbed = {
         color: embedColor,
         title: titleText,
-        description: `${event.description || 'Join this exclusive event!'}\n\n${separator}`,
-        image: imageUrl ? { url: imageUrl } : null,
+        description: event.description
+            ? `${event.description}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+            : '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
         fields,
+        image: imageUrl ? { url: imageUrl } : null,
         footer: {
-            text: `✨ DropLabz • Solana Community Operations | Event: ${event.id.slice(0, 8)}`,
+            text: `✨ DropLabz • Managed event • ${event.id.slice(0, 8)}`,
         },
         timestamp: new Date().toISOString(),
     };

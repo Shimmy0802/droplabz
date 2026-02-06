@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 export default function SignupPage() {
     const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
@@ -17,6 +18,11 @@ export default function SignupPage() {
         setError('');
 
         // Validation
+        if (username.length < 3) {
+            setError('Username must be at least 3 characters');
+            return;
+        }
+
         if (password !== confirmPassword) {
             setError('Passwords do not match');
             return;
@@ -33,7 +39,7 @@ export default function SignupPage() {
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, username, password }),
             });
 
             const data = await res.json();
@@ -51,7 +57,7 @@ export default function SignupPage() {
                     email,
                     password,
                     redirect: true,
-                    redirectTo: '/dashboard',
+                    callbackUrl: '/profile',
                 });
             }, 1000);
         } catch (err) {
@@ -62,7 +68,7 @@ export default function SignupPage() {
     };
 
     const handleDiscordSignIn = () => {
-        signIn('discord', { redirect: true, redirectTo: '/dashboard' });
+        signIn('discord', { callbackUrl: '/profile' });
     };
 
     if (success) {
@@ -123,6 +129,23 @@ export default function SignupPage() {
                                 placeholder="you@example.com"
                                 className="w-full px-4 py-2 rounded-lg bg-[#0a0e27] border border-[#00d4ff] text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff41] transition"
                                 required
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="username" className="block text-sm font-medium mb-2">
+                                Username
+                            </label>
+                            <input
+                                id="username"
+                                type="text"
+                                value={username}
+                                onChange={e => setUsername(e.target.value)}
+                                placeholder="Your unique username"
+                                className="w-full px-4 py-2 rounded-lg bg-[#0a0e27] border border-[#00d4ff] text-white placeholder-gray-600 focus:outline-none focus:border-[#00ff41] transition"
+                                required
+                                minLength={3}
+                                maxLength={50}
                             />
                         </div>
 

@@ -63,11 +63,13 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ev
                     select: {
                         id: true,
                         slug: true,
+                        name: true,
                         ownerId: true,
                         guildId: true,
                         discordAnnouncementChannelId: true,
                         discordGuildName: true,
                         discordAnnouncementChannelName: true,
+                        socials: true,
                     },
                 },
                 requirements: true,
