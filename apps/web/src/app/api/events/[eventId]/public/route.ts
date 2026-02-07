@@ -19,6 +19,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ eve
                         name: true,
                         slug: true,
                         icon: true,
+                        guildId: true,
                     },
                 },
                 requirements: {

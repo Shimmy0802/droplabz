@@ -14,7 +14,9 @@ export async function getDiscordRoleName(guildId: string, roleId: string, botTok
         });
 
         if (!response.ok) {
-            console.warn(`Failed to fetch roles for guild ${guildId}`);
+            console.warn(
+                `[Discord API] Failed to fetch roles for guild ${guildId}: ${response.status} ${response.statusText}`,
+            );
             return null;
         }
 
@@ -22,7 +24,7 @@ export async function getDiscordRoleName(guildId: string, roleId: string, botTok
         const role = roles.find((r: any) => r.id === roleId);
         return role?.name || null;
     } catch (err) {
-        console.error(`Error fetching Discord role name:`, err);
+        console.error(`[Discord API] Error fetching roles:`, err);
         return null;
     }
 }
@@ -32,15 +34,24 @@ export async function getDiscordRoleName(guildId: string, roleId: string, botTok
  * Updates requirement config with role names fetched from Discord
  */
 export async function resolveMissingRoleNames(event: any, botToken: string): Promise<void> {
-    if (!event.community?.guildId || !botToken) return;
+    if (!event.community?.guildId || !botToken) {
+        console.debug(`[Role Resolver] Skipping: guildId=${event.community?.guildId}, hasToken=${!!botToken}`);
+        return;
+    }
+
+    console.debug(`[Role Resolver] Starting for guildId: ${event.community.guildId}`);
 
     for (const req of event.requirements || []) {
         if (req.type === 'DISCORD_ROLE_REQUIRED' && req.config) {
             // If roleName is missing, try to fetch it
             if (!req.config.roleName && req.config.roleId) {
+                console.debug(`[Role Resolver] Fetching role name for ${req.config.roleId}`);
                 const roleName = await getDiscordRoleName(event.community.guildId, req.config.roleId, botToken);
                 if (roleName) {
+                    console.debug(`[Role Resolver] Found role name: ${roleName}`);
                     req.config.roleName = roleName;
+                } else {
+                    console.debug(`[Role Resolver] Could not resolve role: ${req.config.roleId}`);
                 }
             }
         }
