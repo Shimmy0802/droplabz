@@ -1,6 +1,8 @@
 import { db } from '@/lib/db';
 import { apiResponse, apiError, ApiError } from '@/lib/api-utils';
 import { requireCommunityMember, requireCommunityAdmin } from '@/lib/auth/middleware';
+import { resolveMissingRoleNames } from '@/lib/discord/role-resolver';
+import { resolveMissingRoleNames } from '@/lib/discord/role-resolver';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
@@ -106,6 +108,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
                 totalWinners,
                 availableSpots: event.maxWinners - (event.reservedSpots || 0) - totalWinners,
             };
+        }
+
+        // Resolve missing Discord role names
+        if (process.env.DISCORD_BOT_TOKEN) {
+            await resolveMissingRoleNames(event, process.env.DISCORD_BOT_TOKEN);
         }
 
         return apiResponse({
@@ -237,6 +244,11 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
         await db.event.delete({
             where: { id: eventId },
         });
+
+        // Resolve missing Discord role names
+        if (process.env.DISCORD_BOT_TOKEN) {
+            await resolveMissingRoleNames(event, process.env.DISCORD_BOT_TOKEN);
+        }
 
         return apiResponse({ success: true, message: 'Event deleted successfully' });
     } catch (error) {
