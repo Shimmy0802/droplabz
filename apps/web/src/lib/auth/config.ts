@@ -133,18 +133,23 @@ export const authConfig: NextAuthOptions = {
                                 email: null,
                                 username: username || `discord_${discordId}`,
                                 discordUsername: username || null,
+                                discordAccessToken: account.access_token || null,
                                 role: isSuperAdmin ? 'SUPER_ADMIN' : 'MEMBER',
                             },
                         });
                     } else {
                         // Update Discord username if it changed (or if it's missing)
                         // Also update role if user is in super admin list
+                        // Also store access token for guild verification
                         const updateData: any = {};
                         if (username && (!existingUser.discordUsername || username !== existingUser.discordUsername)) {
                             updateData.discordUsername = username;
                         }
                         if (isSuperAdmin && existingUser.role !== 'SUPER_ADMIN') {
                             updateData.role = 'SUPER_ADMIN';
+                        }
+                        if (account.access_token) {
+                            updateData.discordAccessToken = account.access_token;
                         }
 
                         if (Object.keys(updateData).length > 0) {
@@ -195,7 +200,7 @@ export const authConfig: NextAuthOptions = {
             if (session.user?.id) {
                 const user = await db.user.findUnique({
                     where: { id: session.user.id },
-                    select: { username: true, email: true, discordId: true },
+                    select: { username: true, email: true, discordId: true, discordAccessToken: true },
                 });
                 if (user) {
                     session.user.username = user.username || undefined;
@@ -203,6 +208,10 @@ export const authConfig: NextAuthOptions = {
                     session.user.email = (user.email as string) || session.user.email;
                     if (user.discordId) {
                         session.discordId = user.discordId;
+                    }
+                    // Always use fresh access token from DB (in case it was refreshed)
+                    if (user.discordAccessToken) {
+                        session.discordAccessToken = user.discordAccessToken;
                     }
                 }
             }

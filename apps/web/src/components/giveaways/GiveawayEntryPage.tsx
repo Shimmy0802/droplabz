@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useWalletState } from '@/lib/wallet';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
@@ -67,15 +68,58 @@ interface TimeLeft {
 export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
     const router = useRouter();
     const { publicKey, connected } = useWalletState();
+    const { data: session } = useSession();
     const [eventDetails, setEventDetails] = useState<EventDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [discordUserId, setDiscordUserId] = useState('');
+    const [isDiscordLinked, setIsDiscordLinked] = useState(false);
+    const [discordVerifying, setDiscordVerifying] = useState(false);
+    const [discordVerificationError, setDiscordVerificationError] = useState<string | null>(null);
     const [requirementStatuses, setRequirementStatuses] = useState<RequirementStatus[]>([]);
     const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
     const [existingEntry, setExistingEntry] = useState<any>(null);
+
+    // Auto-populate Discord ID from session if user logged in via Discord
+    useEffect(() => {
+        if (session && (session as any).discordId) {
+            setDiscordUserId((session as any).discordId);
+            setIsDiscordLinked(true);
+
+            // Pre-verify Discord guild membership
+            if (eventDetails?.community.guildId) {
+                verifyDiscordGuildMembership((session as any).discordId, eventDetails.community.guildId);
+            }
+        }
+    }, [session, eventDetails?.community.guildId]);
+
+    // Function to verify Discord guild membership
+    const verifyDiscordGuildMembership = async (userId: string, guildId?: string) => {
+        if (!userId || !guildId) return;
+
+        setDiscordVerifying(true);
+        setDiscordVerificationError(null);
+
+        try {
+            const response = await fetch('/api/discord/verify-guild', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ discordUserId: userId, guildId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                setDiscordVerificationError(errorData.error || 'Unable to verify Discord guild membership');
+            }
+        } catch (err) {
+            console.error('Discord guild verification error:', err);
+            setDiscordVerificationError('Network error verifying Discord');
+        } finally {
+            setDiscordVerifying(false);
+        }
+    };
 
     // Fetch event details
     useEffect(() => {
@@ -142,6 +186,24 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
         const verifyRequirements = async () => {
             const statuses: RequirementStatus[] = [];
 
+            // Check if we need to verify Discord roles
+            const needsDiscordRoles = eventDetails.requirements.some(r => r.type === 'DISCORD_ROLE_REQUIRED');
+            let userRoles: string[] = [];
+            let roleNames: Record<string, string> = {};
+
+            if (needsDiscordRoles && isDiscordLinked && eventDetails.community.guildId) {
+                try {
+                    const response = await fetch(`/api/discord/my-roles?guildId=${eventDetails.community.guildId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        userRoles = data.roleIds || [];
+                        roleNames = data.roleNames || {};
+                    }
+                } catch (err) {
+                    console.error('Error fetching Discord roles:', err);
+                }
+            }
+
             for (const req of eventDetails.requirements) {
                 const status: RequirementStatus = {
                     id: req.id,
@@ -149,29 +211,32 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
                     config: req.config,
                     isMet: false,
                     message: '',
-                    checking: true,
+                    checking: false,
                 };
 
                 // Check SOLANA_WALLET_CONNECTED
                 if (req.type === 'SOLANA_WALLET_CONNECTED') {
                     status.isMet = connected && !!publicKey;
                     status.message = status.isMet ? 'Wallet connected' : 'Connect your Solana wallet';
-                    status.checking = false;
                 }
 
                 // Check DISCORD_MEMBER_REQUIRED
                 else if (req.type === 'DISCORD_MEMBER_REQUIRED') {
                     status.isMet = !!discordUserId;
-                    status.message = status.isMet ? 'Discord account provided' : 'Provide your Discord User ID';
-                    status.checking = false;
+                    status.message = status.isMet ? 'Discord account linked' : 'Link your Discord account';
                 }
 
                 // Check DISCORD_ROLE_REQUIRED
                 else if (req.type === 'DISCORD_ROLE_REQUIRED') {
-                    const roleName = req.config.roleName || req.config.roleId || 'Required Role';
+                    const requiredRoleId = req.config.roleId;
+                    const roleName = req.config.roleName || roleNames[requiredRoleId] || 'Required Role';
+
+                    status.isMet = isDiscordLinked && userRoles.includes(requiredRoleId);
                     status.message = `Have "${roleName}" role in Discord`;
-                    status.isMet = false; // Will be verified server-side
-                    status.checking = false;
+
+                    if (!isDiscordLinked) {
+                        status.message = `Link Discord to verify "${roleName}" role`;
+                    }
                 }
 
                 // Check SOLANA_TOKEN_HOLDING
@@ -179,10 +244,6 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
                     const { amount } = req.config;
                     status.message = `Hold ${amount || 'required'} tokens`;
                     status.isMet = false; // Will check on-chain
-                    status.checking = false;
-
-                    // Note: Full verification happens server-side on entry submission
-                    // This is just a placeholder for UI consistency
                 }
 
                 // Check SOLANA_NFT_OWNERSHIP
@@ -190,14 +251,12 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
                     const collection = req.config.collection || req.config.collectionName || 'NFT Collection';
                     status.message = `Own NFT from ${collection}`;
                     status.isMet = false; // Will be verified server-side
-                    status.checking = false;
                 }
 
                 // Other requirement types
                 else {
                     status.message = formatRequirement(req.type, req.config);
                     status.isMet = false;
-                    status.checking = false;
                 }
 
                 statuses.push(status);
@@ -207,7 +266,7 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
         };
 
         verifyRequirements();
-    }, [eventDetails, connected, publicKey, discordUserId]);
+    }, [eventDetails, connected, publicKey, discordUserId, isDiscordLinked]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -532,19 +591,45 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
                                 <div>
                                     <label className="block text-sm font-medium text-white mb-2">
                                         Discord User ID
-                                        <span className="text-gray-400 text-xs ml-2">(Required for verification)</span>
+                                        {isDiscordLinked && (
+                                            <span className="text-[#00ff41] text-xs ml-2">✓ Auto-linked</span>
+                                        )}
+                                        {!isDiscordLinked && (
+                                            <span className="text-gray-400 text-xs ml-2">
+                                                (Required for verification)
+                                            </span>
+                                        )}
                                     </label>
-                                    <input
-                                        type="text"
-                                        value={discordUserId}
-                                        onChange={e => setDiscordUserId(e.target.value)}
-                                        placeholder="123456789012345678"
-                                        className="w-full px-4 py-3 bg-[#0a0e27] border border-[#00d4ff] text-white rounded-lg focus:outline-none focus:border-[#00ff41] focus:ring-1 focus:ring-[#00ff41]"
-                                    />
-                                    <p className="text-xs text-gray-400 mt-2">
-                                        Find your ID: User Settings → Advanced → Enable Developer Mode → Right-click
-                                        your name → Copy ID
-                                    </p>
+                                    {isDiscordLinked ? (
+                                        <div className="p-4 bg-[#00ff41]/5 border border-[#00ff41]/30 rounded-lg">
+                                            <p className="text-xs text-gray-400 mb-1">Linked from Discord Account</p>
+                                            <p className="text-sm text-[#00ff41] font-mono">{discordUserId}</p>
+                                            {discordVerifying && (
+                                                <p className="text-xs text-blue-400 mt-2">
+                                                    🔍 Verifying Discord server membership...
+                                                </p>
+                                            )}
+                                            {discordVerificationError && (
+                                                <p className="text-xs text-yellow-400 mt-2">
+                                                    ⚠️ {discordVerificationError}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <input
+                                                type="text"
+                                                value={discordUserId}
+                                                onChange={e => setDiscordUserId(e.target.value)}
+                                                placeholder="123456789012345678"
+                                                className="w-full px-4 py-3 bg-[#0a0e27] border border-[#00d4ff] text-white rounded-lg focus:outline-none focus:border-[#00ff41] focus:ring-1 focus:ring-[#00ff41]"
+                                            />
+                                            <p className="text-xs text-gray-400 mt-2">
+                                                Find your ID: User Settings → Advanced → Enable Developer Mode →
+                                                Right-click your name → Copy ID
+                                            </p>
+                                        </>
+                                    )}
                                 </div>
                             )}
 

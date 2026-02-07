@@ -66,6 +66,7 @@ model User {
   role         UserRole @default(MEMBER)
   discordId    String?  @unique
   discordUsername String?
+  discordAccessToken String? // OAuth token for Discord API calls
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
