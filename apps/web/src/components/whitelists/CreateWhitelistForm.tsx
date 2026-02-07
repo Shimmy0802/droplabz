@@ -14,11 +14,19 @@ export function CreateWhitelistForm({ communityId, slug, onSuccess }: WhitelistF
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Helper to get local date in YYYY-MM-DD format (not UTC)
+    const getLocalDateString = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         maxSpots: 100,
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        endDate: getLocalDateString(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
         discordRoleRequired: false,
         discordRoleId: '',
         discordAccountAgeDays: 0,
@@ -64,6 +72,10 @@ export function CreateWhitelistForm({ communityId, slug, onSuccess }: WhitelistF
                 });
             }
 
+            // Parse date as local time (not UTC)
+            const [year, month, day] = formData.endDate.split('-').map(Number);
+            const endDateTime = new Date(year, month - 1, day, 23, 59, 59);
+
             const response = await fetch('/api/events', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -72,7 +84,7 @@ export function CreateWhitelistForm({ communityId, slug, onSuccess }: WhitelistF
                     type: 'WHITELIST',
                     title: formData.title,
                     description: formData.description,
-                    endAt: new Date(formData.endDate).toISOString(),
+                    endAt: endDateTime.toISOString(),
                     status: 'ACTIVE',
                     requirements,
                 }),

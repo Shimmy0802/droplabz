@@ -21,6 +21,20 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
     const [error, setError] = useState<string | null>(null);
     const [requirements, setRequirements] = useState<Requirement[]>([]);
 
+    // Helper to convert UTC date to local date/time for display
+    const getLocalDateTimeString = (isoString: string): { date: string; time: string } => {
+        const date = new Date(isoString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return {
+            date: `${year}-${month}-${day}`,
+            time: `${hours}:${minutes}`,
+        };
+    };
+
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -39,7 +53,7 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
 
     useEffect(() => {
         if (event) {
-            const endDate = new Date(event.endAt);
+            const { date: localDate, time: localTime } = getLocalDateTimeString(event.endAt);
             const existingRequirements =
                 event.requirements
                     ?.filter((r: any) => r.type !== 'SOLANA_WALLET_CONNECTED')
@@ -60,8 +74,8 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
                 status: event.status || 'DRAFT',
                 autoAssignDiscordRole: event.autoAssignDiscordRole || false,
                 winnerDiscordRoleId: event.winnerDiscordRoleId || '',
-                endDate: endDate.toISOString().split('T')[0],
-                endTime: endDate.toTimeString().slice(0, 5),
+                endDate: localDate,
+                endTime: localTime,
                 mentionRoleIds: event.mentionRoleIds || [],
                 customAnnouncementLine: event.customAnnouncementLine || '',
             });
@@ -131,7 +145,10 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
                 }
             }
 
-            const endDateTime = new Date(`${formData.endDate}T${formData.endTime}:00`);
+            // Parse date/time as local time (not UTC)
+            const [endYear, endMonth, endDay] = formData.endDate.split('-').map(Number);
+            const [endHours, endMinutes] = formData.endTime.split(':').map(Number);
+            const endDateTime = new Date(endYear, endMonth - 1, endDay, endHours, endMinutes, 0);
 
             type EventUpdateData = {
                 title: string;

@@ -82,6 +82,17 @@ export function CreatePresaleForm({ communityId, onSuccess }: CreatePresaleFormP
         }
 
         try {
+            // Parse datetime-local strings to proper ISO strings
+            // datetime-local format: "YYYY-MM-DDTHH:MM" (interpreted as local time)
+            const parseLocalDateTime = (datetimeStr: string): string => {
+                if (!datetimeStr) throw new Error('Invalid datetime');
+                const [date, time] = datetimeStr.split('T');
+                const [year, month, day] = date.split('-').map(Number);
+                const [hours, minutes] = time.split(':').map(Number);
+                const localDate = new Date(year, month - 1, day, hours, minutes, 0);
+                return localDate.toISOString();
+            };
+
             const response = await fetch('/api/presales', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -89,8 +100,8 @@ export function CreatePresaleForm({ communityId, onSuccess }: CreatePresaleFormP
                     communityId,
                     name: formData.name,
                     description: formData.description,
-                    startAt: new Date(formData.startAt).toISOString(),
-                    endAt: new Date(formData.endAt).toISOString(),
+                    startAt: parseLocalDateTime(formData.startAt),
+                    endAt: parseLocalDateTime(formData.endAt),
                     tiers: tiers.map(tier => ({
                         name: tier.name,
                         maxSpots: tier.maxSpots,

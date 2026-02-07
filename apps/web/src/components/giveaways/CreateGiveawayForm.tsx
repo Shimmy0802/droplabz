@@ -34,15 +34,23 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [uploadingImage, setUploadingImage] = useState(false);
 
+    // Helper to get local date in YYYY-MM-DD format (not UTC)
+    const getLocalDateString = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         prize: '',
         maxWinners: 1,
         selectionMode: 'RANDOM' as 'RANDOM' | 'FCFS' | 'MANUAL',
-        startDate: new Date().toISOString().split('T')[0],
+        startDate: getLocalDateString(new Date()),
         startTime: '00:00',
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        endDate: getLocalDateString(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
         endTime: '23:59',
         imageUrl: '',
         mentionRoleIds: [] as string[],
@@ -195,8 +203,14 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
                 }
             }
 
-            const startDateTime = new Date(`${formData.startDate}T${formData.startTime}:00`);
-            const endDateTime = new Date(`${formData.endDate}T${formData.endTime}:00`);
+            // Parse date strings as local time (not UTC)
+            const [startYear, startMonth, startDay] = formData.startDate.split('-').map(Number);
+            const [startHours, startMinutes] = formData.startTime.split(':').map(Number);
+            const startDateTime = new Date(startYear, startMonth - 1, startDay, startHours, startMinutes, 0);
+
+            const [endYear, endMonth, endDay] = formData.endDate.split('-').map(Number);
+            const [endHours, endMinutes] = formData.endTime.split(':').map(Number);
+            const endDateTime = new Date(endYear, endMonth - 1, endDay, endHours, endMinutes, 0);
 
             if (startDateTime >= endDateTime) {
                 throw new Error('End date must be after start date');
