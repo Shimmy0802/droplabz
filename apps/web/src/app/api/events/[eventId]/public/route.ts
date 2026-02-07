@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { resolveMissingRoleNames } from '@/lib/discord/role-resolver';
 
 /**
  * PUBLIC endpoint to fetch event details for public event pages
@@ -39,6 +40,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ eve
 
         if (!event) {
             return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+        }
+
+        // Resolve missing Discord role names
+        if (process.env.DISCORD_BOT_TOKEN) {
+            await resolveMissingRoleNames(event, process.env.DISCORD_BOT_TOKEN);
         }
 
         return NextResponse.json(event);

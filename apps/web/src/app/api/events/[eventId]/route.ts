@@ -2,7 +2,6 @@ import { db } from '@/lib/db';
 import { apiResponse, apiError, ApiError } from '@/lib/api-utils';
 import { requireCommunityMember, requireCommunityAdmin } from '@/lib/auth/middleware';
 import { resolveMissingRoleNames } from '@/lib/discord/role-resolver';
-import { resolveMissingRoleNames } from '@/lib/discord/role-resolver';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
