@@ -65,7 +65,7 @@ client.on('interactionCreate', async interaction => {
 app.post('/announce', async (req: Request, res: Response) => {
     try {
         console.log('[Bot API] POST /announce received');
-        const { guildId, channelId, embed } = req.body;
+        const { guildId, channelId, embed, content, mentionRoleIds } = req.body;
 
         // Validate inputs
         if (!guildId || !channelId || !embed) {
@@ -73,10 +73,18 @@ app.post('/announce', async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Missing guildId, channelId, or embed' });
         }
 
-        console.log('[Bot API] Announcing to guild:', { guildId, channelId, title: embed.title });
+        console.log('[Bot API] Announcing to guild:', {
+            guildId,
+            channelId,
+            title: embed.title,
+            hasContent: !!content,
+        });
 
         // Post to Discord
-        const result = await announceEvent(client, guildId, channelId, embed as AnnouncementData);
+        const result = await announceEvent(client, guildId, channelId, embed as AnnouncementData, {
+            content,
+            mentionRoleIds,
+        });
 
         console.log('[Bot API] Announcement posted successfully:', result);
         res.json({

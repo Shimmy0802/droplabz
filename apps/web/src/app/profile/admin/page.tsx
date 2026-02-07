@@ -100,11 +100,12 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="space-y-6 pb-6">
+        <div className="min-h-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
             {/* Header */}
             <div>
+                <p className="text-xs uppercase tracking-wide text-gray-400 mb-2">Administration</p>
                 <h1 className="text-3xl font-bold text-white mb-2">Platform Admin</h1>
-                <p className="text-gray-400">Manage all communities and view platform statistics</p>
+                <p className="text-gray-300 text-sm">Manage all communities and view platform statistics</p>
             </div>
 
             {/* Stats Grid */}
@@ -122,14 +123,14 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Link
                     href="/profile/admin/users"
-                    className="bg-[#111528] border border-[rgba(0,212,255,0.2)] rounded-lg p-6 hover:border-[#00d4ff] transition group"
+                    className="bg-gray-900/30 border border-gray-700 rounded-lg p-6 hover:border-[#00d4ff] hover:bg-gray-900/50 transition group backdrop-blur-sm"
                 >
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#00d4ff] transition">
                                 User Management
                             </h3>
-                            <p className="text-gray-400 text-sm">
+                            <p className="text-gray-300 text-sm">
                                 View and manage all users, change roles, and monitor activity
                             </p>
                         </div>
@@ -146,14 +147,14 @@ export default function AdminPage() {
 
                 <Link
                     href="/profile/admin/communities"
-                    className="bg-[#111528] border border-[rgba(0,255,65,0.2)] rounded-lg p-6 hover:border-[#00ff41] transition group"
+                    className="bg-gray-900/30 border border-gray-700 rounded-lg p-6 hover:border-[#00ff41] hover:bg-gray-900/50 transition group backdrop-blur-sm"
                 >
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="text-xl font-bold text-white mb-2 group-hover:text-[#00ff41] transition">
                                 Community Management
                             </h3>
-                            <p className="text-gray-400 text-sm">
+                            <p className="text-gray-300 text-sm">
                                 Manage all communities, verify, feature, and moderate content
                             </p>
                         </div>

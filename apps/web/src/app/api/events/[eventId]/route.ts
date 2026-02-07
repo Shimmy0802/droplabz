@@ -15,6 +15,8 @@ const updateEventSchema = z.object({
     autoAssignDiscordRole: z.boolean().optional(),
     winnerDiscordRoleId: z.string().optional(),
     endAt: z.string().datetime().optional(),
+    mentionRoleIds: z.array(z.string()).optional(),
+    customAnnouncementLine: z.string().max(500).optional(),
 });
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
@@ -35,6 +37,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
                         name: true,
                         slug: true,
                         icon: true,
+                        socials: true,
                     },
                 },
                 requirements: true,

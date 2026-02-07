@@ -303,22 +303,22 @@ export default function ProfileSettings() {
     }
 
     return (
-        <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <div className="min-h-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <p className="text-sm uppercase tracking-wide text-gray-500">Profile</p>
-                    <h1 className="text-4xl font-bold text-white mt-2">Settings</h1>
-                    <p className="text-gray-400 mt-2">Manage your account settings and preferences.</p>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">Profile</p>
+                    <h1 className="text-3xl font-bold text-white mt-2">Settings</h1>
+                    <p className="text-gray-300 text-sm mt-2">Manage your account settings and preferences.</p>
                 </div>
             </div>
 
             <div className="space-y-6">
                 {/* Account Settings */}
-                <section className="rounded-xl border border-[rgba(0,212,255,0.1)] bg-[#0f1329] p-6 space-y-6">
+                <section className="rounded-lg border border-gray-700 bg-gray-900/30 p-6 space-y-6 backdrop-blur-sm">
                     <div>
                         <h2 className="text-xl font-semibold text-white">Account Settings</h2>
-                        <p className="text-gray-400 text-sm mt-1">Manage your account information and security.</p>
+                        <p className="text-gray-300 text-sm mt-1">Manage your account information and security.</p>
                     </div>
 
                     <div className="space-y-4">
@@ -331,7 +331,7 @@ export default function ProfileSettings() {
                                     value={username}
                                     onChange={e => dispatch({ type: 'SET_USERNAME', payload: e.target.value })}
                                     readOnly={!isEditingUsername}
-                                    className={`flex-1 px-4 py-3 rounded-lg bg-[#111528] border border-[rgba(0,212,255,0.2)] text-white focus:border-[#00d4ff] focus:outline-none ${!isEditingUsername ? 'cursor-not-allowed' : ''}`}
+                                    className={`flex-1 px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700 text-white placeholder-gray-500 focus:border-[#00d4ff] focus:outline-none transition ${!isEditingUsername ? 'cursor-not-allowed opacity-70' : ''}`}
                                 />
                                 {isEditingUsername ? (
                                     <div className="flex gap-2">

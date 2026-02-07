@@ -18,6 +18,7 @@ export function JoinCommunityButton({
     isListed,
     onJoinSuccess,
 }: JoinCommunityButtonProps) {
+    console.log('🔘 JoinCommunityButton rendered:', { communityId, isAuthenticated, isMember, isListed });
     const router = useRouter();
     const [joining, setJoining] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -63,20 +64,12 @@ export function JoinCommunityButton({
         }
     }
 
-    // Don't show button if community is not listed
-    if (!isListed) {
-        return null;
-    }
-
     // Success state (show before updating to member)
     if (success) {
         return (
-            <div className="text-center">
-                <button disabled className="px-6 py-3 bg-[#00ff41] text-[#0a0e27] rounded-lg font-semibold shadow-lg">
-                    ✓ Joined Successfully!
-                </button>
-                <p className="mt-1 text-xs text-[#00ff41]">Welcome to the community!</p>
-            </div>
+            <button disabled className="px-6 py-3 bg-[#00ff41] text-[#0a0e27] rounded-lg font-semibold shadow-lg">
+                ✓ Joined Successfully!
+            </button>
         );
     }
 
@@ -93,7 +86,7 @@ export function JoinCommunityButton({
     }
 
     return (
-        <div className="text-center">
+        <div>
             <button
                 onClick={handleJoin}
                 disabled={joining}

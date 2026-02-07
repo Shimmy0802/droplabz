@@ -55,6 +55,8 @@ export interface EventData {
     maxWinners?: number;
     selectionMode?: string;
     status?: string;
+    mentionRoleIds?: string[]; // Discord role IDs to mention in announcement
+    customAnnouncementLine?: string | null; // Custom announcement text
     requirements?: Array<{
         id: string;
         type: string;
@@ -70,6 +72,50 @@ export interface EventData {
         name: string;
         socials?: Record<string, string | null>;
     };
+}
+
+/**
+ * Generate creative announcement line based on event type
+ * Used as Discord message content before the embed
+ */
+export function generateAnnouncementLine(eventType: string): string {
+    const type = (eventType || '').toUpperCase();
+
+    const lines: Record<string, string[]> = {
+        GIVEAWAY: [
+            '⚡ Giveaway live — execute your entry now.',
+            '💥 Giveaway activated — claim your allocation.',
+            '🔥 Giveaway window open — take action immediately.',
+            '⚙️ Giveaway processing — secure your spot.',
+        ],
+        WHITELIST: [
+            '🔐 Whitelist window open — lock in your access.',
+            '🛡️ Whitelist verification active — complete setup.',
+            '✓ Whitelist is live — claim your reserved slot.',
+            '🔑 Whitelist opens now — control your entry.',
+        ],
+        PRESALE: [
+            '⚙️ Presale infrastructure live — initialize allocation.',
+            '🔌 Presale connected — secure your reservation.',
+            '📊 Presale window open — execute your purchase.',
+            '⚡ Presale activation — grab your allocation now.',
+        ],
+        ACCESS: [
+            '🔓 Access unlocked — enter the system.',
+            '🔑 Access control active — verify your credentials.',
+            '🛡️ Access granted — complete verification.',
+            '📍 Access portal open — join the network.',
+        ],
+        AIRDROP: [
+            '📡 Airdrop signal broadcast — claim your share.',
+            '💿 Airdrop distribution live — execute transfer.',
+            '🔄 Airdrop cycle active — collect allocation.',
+            '⚡ Airdrop initialized — secure tokens now.',
+        ],
+    };
+
+    const typeLines = lines[type] || lines.GIVEAWAY;
+    return typeLines[Math.floor(Math.random() * typeLines.length)];
 }
 
 /**
@@ -100,39 +146,20 @@ function getUrgencyBadge(endAt: Date): { emoji: string; text: string; color: num
 function getRequirementEmoji(type: string): string {
     const typeMap: Record<string, string> = {
         SOLANA_BALANCE: '⚡', // Solana network icon
-        TOKEN_BALANCE: '💎', // Token/asset icon
-        NFT_HOLDER: '🖼️', // NFT visual
-        TWITTER_FOLLOW: '𝕏', // Twitter/X
-        DISCORD_ROLE: '👤', // Person/role icon
-        DISCORD_MEMBER: '👥', // Multiple people
-        ALLOWLIST: '✅', // Checkmark
-        CUSTOM: '🔐', // Generic lock/verification
-        WHITELIST: '📋', // List icon
-        POINTS: '⭐', // Points/rewards
-        LEVEL: '📈', // Level/progress
-        INVITE: '🔗', // Referral/invite
+        TOKEN_BALANCE: '�', // Data/token icon
+        NFT_HOLDER: '💿', // Technical asset icon
+        TWITTER_FOLLOW: '📡', // Signal/broadcast
+        DISCORD_ROLE: '🔑', // Role/access control
+        DISCORD_MEMBER: '🔐', // Security/membership
+        ALLOWLIST: '✓', // Verification checkmark
+        CUSTOM: '⚙️', // Configuration/custom
+        WHITELIST: '🛡️', // Protection/whitelist
+        POINTS: '📊', // Data/metrics
+        LEVEL: '📈', // Infrastructure/progress
+        INVITE: '🔌', // Connected/network
     };
 
-    return typeMap[type] || '🔐'; // Default to lock icon
-}
-
-/**
- * ENHANCEMENT 7: Capacity Progress Bar
- * ASCII visualization of entry progress toward max winners
- */
-function getCapacityProgressBar(entries: number, maxWinners: number | undefined): string {
-    if (!maxWinners || maxWinners === 0) return `📊 **${entries}** entries received`;
-
-    const barLength = 10;
-    const percentage = Math.min((entries / maxWinners) * 100, 100);
-    const filledBlocks = Math.round((percentage / 100) * barLength);
-    const emptyBlocks = barLength - filledBlocks;
-
-    const filledBar = '█'.repeat(filledBlocks);
-    const emptyBar = '░'.repeat(emptyBlocks);
-    const progressBar = `[${filledBar}${emptyBar}]`;
-
-    return `${progressBar} **${entries}/${maxWinners}** slots filled (${Math.round(percentage)}%)`;
+    return typeMap[type] || '⚙️'; // Default to infrastructure icon
 }
 
 /**
@@ -157,18 +184,6 @@ function formatRequirementName(req: { type: string; config?: any }): string {
     };
 
     return typeNames[req.type] || req.type.replace(/_/g, ' ');
-}
-
-/**
- * Format selection mode for display
- */
-function getSelectionModeDisplay(mode: string): string {
-    const modeMap: Record<string, string> = {
-        RANDOM: '🎲 Random Draw',
-        FCFS: '⚡ First-Come-First-Served',
-        MANUAL: '✋ Manual Selection',
-    };
-    return modeMap[mode] || mode;
 }
 
 /**
@@ -215,15 +230,15 @@ export function buildProfessionalEventEmbed(
 
     // Type emoji and color mapping
     const typeEmojiMap: Record<string, string> = {
-        WHITELIST: '✅',
-        PRESALE: '🚀',
-        GIVEAWAY: '🎁',
-        COLLABORATION: '🤝',
-        ACCESS: '🔐',
-        AIRDROP: '💨',
-        RAFFLE: '🎰',
+        WHITELIST: '🔐',
+        PRESALE: '⚙️',
+        GIVEAWAY: '⚡',
+        COLLABORATION: '🔌',
+        ACCESS: '🔓',
+        AIRDROP: '📡',
+        RAFFLE: '💥',
     };
-    const typeEmoji = typeEmojiMap[event.type] || '🎯';
+    const typeEmoji = typeEmojiMap[event.type] || '⚙️';
 
     // Get urgency badge
     const urgencyBadge = getUrgencyBadge(deadline);
@@ -245,15 +260,37 @@ export function buildProfessionalEventEmbed(
     const titleText = `${typeEmoji} ${event.title}`;
 
     // Build "To Enter:" section with requirement bullets
-    let toEnterText = '✅ No special requirements - open to all';
+    const toEnterLines: string[] = [];
+
+    // Always include: Linked Solana Wallet
+    toEnterLines.push('• ⚡ Linked Solana Wallet');
+
+    // Add Discord roles if mentionRoleIds exist (show specific role IDs)
+    if (event.mentionRoleIds && event.mentionRoleIds.length > 0) {
+        const roleList = event.mentionRoleIds.map(id => `<@&${id}>`).join(', ');
+        toEnterLines.push(`• 🔑 Discord Roles Required: ${roleList}`);
+    }
+
+    // Add other requirements (excluding DISCORD_ROLE_REQUIRED since we already showed mentionRoleIds above)
     if (event.requirements && event.requirements.length > 0) {
-        const reqLines = event.requirements.map(req => {
+        event.requirements.forEach(req => {
+            // Skip wallet and role requirements since they're already shown above
+            if (
+                req.type === 'SOLANA_WALLET_CONNECTED' ||
+                req.type === 'SOLANA_BALANCE' ||
+                req.type === 'DISCORD_ROLE_REQUIRED' ||
+                req.type === 'DISCORD_ROLE'
+            ) {
+                return;
+            }
             const emoji = getRequirementEmoji(req.type);
             const displayName = formatRequirementName(req);
-            return `• ${emoji} ${displayName}`;
+            toEnterLines.push(`• ${emoji} ${displayName}`);
         });
-        toEnterText = reqLines.join('\n');
     }
+
+    // If no additional requirements beyond wallet, that's fine
+    const toEnterText = toEnterLines.length > 0 ? toEnterLines.join('\n') : '✅ Linked Solana Wallet';
 
     // Build fields array
     const fields: DiscordEmbed['fields'] = [];
@@ -269,15 +306,26 @@ export function buildProfessionalEventEmbed(
     const requirementsLines: string[] = [];
     if (event.requirements && event.requirements.length > 0) {
         event.requirements.forEach(req => {
+            // Skip wallet and role requirements since they're already shown in "To Enter:"
+            if (
+                req.type === 'SOLANA_WALLET_CONNECTED' ||
+                req.type === 'SOLANA_BALANCE' ||
+                req.type === 'DISCORD_ROLE_REQUIRED' ||
+                req.type === 'DISCORD_ROLE'
+            ) {
+                return;
+            }
             const emoji = getRequirementEmoji(req.type);
             const displayName = formatRequirementName(req);
             requirementsLines.push(`☑️ ${emoji} ${displayName}`);
         });
-        fields.push({
-            name: 'Requirements:',
-            value: requirementsLines.join('\n'),
-            inline: false,
-        });
+        if (requirementsLines.length > 0) {
+            fields.push({
+                name: 'Requirements:',
+                value: requirementsLines.join('\n'),
+                inline: false,
+            });
+        }
     }
 
     // Section: Links (Website, Telegram, Discord)

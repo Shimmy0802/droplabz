@@ -5,10 +5,8 @@ import { useSession } from 'next-auth/react';
 import { CommunityHeader } from '@/components/community/CommunityHeader';
 import { EventCard } from '@/components/community/EventCard';
 import { StatsPanel } from '@/components/community/StatsPanel';
-import { ActionButtons } from '@/components/community/ActionButtons';
 import { AnnouncementCard } from '@/components/community/AnnouncementCard';
 import { CreateAnnouncementForm } from '@/components/community/CreateAnnouncementForm';
-import { JoinCommunityButton } from '@/components/community/JoinCommunityButton';
 
 interface Community {
     id: string;
@@ -150,26 +148,40 @@ export default function CommunityPage({ params }: { params: Promise<{ slug: stri
                 setPresales(presalesData);
             }
 
-            // Get member count (from CommunityMember table)
-            // TODO: Create API endpoint for this
-            setStats(prev => ({ ...prev, memberCount: 0, reviewCount: 0 }));
-
             // Get announcements
             await loadAnnouncements(communityData.id);
+
+            // Get member count
+            const memberCountRes = await fetch(`/api/communities/${communityData.id}/members?limit=1`);
+            if (memberCountRes.ok) {
+                const memberCountData = await memberCountRes.json();
+                setStats(prev => ({ ...prev, memberCount: memberCountData.pagination.total, reviewCount: 0 }));
+            } else {
+                setStats(prev => ({ ...prev, memberCount: 0, reviewCount: 0 }));
+            }
 
             // Check if user is admin or member of this community
             if (session?.user?.id) {
                 const memberRes = await fetch(`/api/communities/${communityData.id}/members?userId=${session.user.id}`);
                 if (memberRes.ok) {
                     const memberData = await memberRes.json();
-                    setIsMember(true);
-                    setIsAdmin(
-                        memberData.role === 'OWNER' ||
-                            memberData.role === 'ADMIN' ||
-                            session.user.role === 'SUPER_ADMIN',
-                    );
+                    // API returns { data: [...], pagination: {...} }
+                    // If data array has items, user is a member
+                    if (memberData.data && memberData.data.length > 0) {
+                        setIsMember(true);
+                        const userMember = memberData.data[0];
+                        setIsAdmin(
+                            userMember.role === 'OWNER' ||
+                                userMember.role === 'ADMIN' ||
+                                session.user.role === 'SUPER_ADMIN',
+                        );
+                    } else {
+                        setIsMember(false);
+                        setIsAdmin(false);
+                    }
                 } else {
                     setIsMember(false);
+                    setIsAdmin(false);
                 }
             }
         } catch (err) {
@@ -255,9 +267,6 @@ export default function CommunityPage({ params }: { params: Promise<{ slug: stri
                         isAuthenticated={!!session}
                         onJoinSuccess={() => loadCommunityData(community.slug)}
                     />
-
-                    {/* Action Buttons */}
-                    <ActionButtons discordUrl={community.socials?.discord} websiteUrl={community.socials?.website} />
 
                     {/* Tabs */}
                     <div className="border-b border-[rgba(0,255,65,0.2)]">

@@ -7,6 +7,7 @@ import { CategoryFilter } from '@/components/CategoryFilter';
 interface Community {
     id: string;
     name: string;
+    slug: string;
     description: string | null;
     icon: string | null;
     banner: string | null;
@@ -30,8 +31,10 @@ export function EditCommunityForm({ community, onSuccess }: EditCommunityFormPro
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [slugEdited, setSlugEdited] = useState(false);
     const [formData, setFormData] = useState({
         name: community.name,
+        slug: community.slug,
         description: community.description || '',
         icon: community.icon || '',
         banner: community.banner || '',
@@ -44,6 +47,15 @@ export function EditCommunityForm({ community, onSuccess }: EditCommunityFormPro
             instagram: community.socials?.instagram || '',
         },
     });
+
+    const normalizeSlug = (value: string) =>
+        value
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-]/g, '')
+            .replace(/-+/g, '-')
+            .replace(/^-+|-+$/g, '');
 
     const handleFileUpload = async (file: File, fieldName: 'icon' | 'banner') => {
         if (!file) return;
@@ -98,6 +110,7 @@ export function EditCommunityForm({ community, onSuccess }: EditCommunityFormPro
             // Build request body with proper null handling
             const requestBody: Record<string, any> = {
                 name: formData.name,
+                slug: formData.slug,
                 description: formData.description || null,
                 icon: formData.icon || null,
                 banner: formData.banner || null,
@@ -117,9 +130,19 @@ export function EditCommunityForm({ community, onSuccess }: EditCommunityFormPro
                 body: JSON.stringify(requestBody),
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const data = await response.json();
                 throw new Error(data.message || 'Failed to update community');
+            }
+
+            if (data.slug && data.slug !== community.slug) {
+                const currentPath = window.location.pathname;
+                const updatedPath = currentPath.replace(
+                    `/profile/communities/${community.slug}/`,
+                    `/profile/communities/${data.slug}/`,
+                );
+                router.replace(updatedPath);
             }
 
             if (onSuccess) {
@@ -147,9 +170,44 @@ export function EditCommunityForm({ community, onSuccess }: EditCommunityFormPro
                     type="text"
                     required
                     value={formData.name}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    onChange={e => {
+                        const nextName = e.target.value;
+                        setFormData(prev => ({
+                            ...prev,
+                            name: nextName,
+                            slug: slugEdited ? prev.slug : normalizeSlug(nextName),
+                        }));
+                    }}
                     className="w-full px-4 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg focus:outline-none focus:border-[#00d4ff]"
                 />
+            </div>
+
+            {/* Community Slug */}
+            <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Community URL Slug</label>
+                <div className="flex items-center">
+                    <span className="px-3 py-2 bg-gray-900 border border-gray-700 text-gray-400 text-sm rounded-l-lg">
+                        https://droplabz.vercel.app/communities/
+                    </span>
+                    <input
+                        type="text"
+                        required
+                        value={formData.slug}
+                        onChange={e => {
+                            const nextSlug = normalizeSlug(e.target.value);
+                            setSlugEdited(nextSlug.length > 0);
+                            setFormData(prev => ({
+                                ...prev,
+                                slug: nextSlug.length > 0 ? nextSlug : normalizeSlug(prev.name),
+                            }));
+                        }}
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 text-white rounded-r-lg focus:outline-none focus:border-[#00d4ff] font-mono text-sm"
+                        placeholder="your-community"
+                    />
+                </div>
+                <p className="text-gray-500 text-sm mt-1">
+                    Lowercase letters, numbers, and hyphens only. Updates automatically unless you edit it.
+                </p>
             </div>
 
             {/* Description */}

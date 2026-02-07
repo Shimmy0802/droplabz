@@ -71,6 +71,11 @@ export async function verifyDiscordRequirements(
 
             if (requirement.type === 'DISCORD_ROLE_REQUIRED') {
                 const requiredRoleId = config.roleId as string | undefined;
+                // Skip verification if roleId is not set (shouldn't happen with form validation, but safety check)
+                if (!requiredRoleId || requiredRoleId.trim() === '') {
+                    warnings.push('Discord role requirement not configured with role ID');
+                    continue;
+                }
                 if (!member.roles.includes(requiredRoleId)) {
                     errors.push(`Missing required Discord role: ${config.roleName || requiredRoleId}`);
                 }

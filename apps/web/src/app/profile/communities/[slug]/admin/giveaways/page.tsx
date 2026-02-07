@@ -102,21 +102,34 @@ export default function AdminGiveawaysPage() {
             error={error}
             tabs={
                 <div className="flex gap-2 border-b border-gray-700/50">
-                    {(['active', 'closed', 'draft'] as const).map(tab => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`px-4 py-3 font-medium capitalize transition ${
-                                activeTab === tab
-                                    ? 'text-[#00ff41] border-b-2 border-[#00ff41]'
-                                    : 'text-gray-400 hover:text-white'
-                            }`}
-                        >
-                            {tab === 'active' ? `Active (${giveaways.filter(g => g.status === 'ACTIVE').length})` : ''}
-                            {tab === 'closed' ? `Closed (${giveaways.filter(g => g.status === 'CLOSED').length})` : ''}
-                            {tab === 'draft' ? `Draft (${giveaways.filter(g => g.status === 'DRAFT').length})` : ''}
-                        </button>
-                    ))}
+                    {(['active', 'closed', 'draft'] as const).map(tab => {
+                        let count = 0;
+                        const now = new Date();
+                        if (tab === 'active') {
+                            count = giveaways.filter(
+                                g => g.status === 'ACTIVE' && g.endAt && new Date(g.endAt) > now,
+                            ).length;
+                        } else if (tab === 'closed') {
+                            count = giveaways.filter(
+                                g => g.status === 'CLOSED' || (g.endAt && new Date(g.endAt) <= now),
+                            ).length;
+                        } else {
+                            count = giveaways.filter(g => g.status === 'DRAFT').length;
+                        }
+                        return (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-4 py-3 font-medium capitalize transition ${
+                                    activeTab === tab
+                                        ? 'text-[#00ff41] border-b-2 border-[#00ff41]'
+                                        : 'text-gray-400 hover:text-white'
+                                }`}
+                            >
+                                {tab} ({count})
+                            </button>
+                        );
+                    })}
                 </div>
             }
         >

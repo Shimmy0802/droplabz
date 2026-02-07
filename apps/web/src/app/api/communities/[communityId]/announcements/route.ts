@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, requireCommunityAdmin } from '@/lib/auth/middleware';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 
 const querySchema = z.object({
-    limit: z.string().optional().default('20').transform(Number),
-    offset: z.string().optional().default('0').transform(Number),
+    limit: z.string().nullish().default('20').transform(Number),
+    offset: z.string().nullish().default('0').transform(Number),
 });
 
 /**

@@ -232,6 +232,8 @@ model Event {
   reservedSpots  Int      @default(0) // Team spots reserved from maxWinners
   autoAssignDiscordRole Boolean @default(false) // Auto-assign role to winners
   winnerDiscordRoleId String? // Discord role ID to assign to winners
+  mentionRoleIds String[] @default([]) // Discord role IDs to mention in announcement
+  customAnnouncementLine String? // Custom announcement line (overrides auto-generated)
   autoAnnounceOnCreate Boolean @default(false) // Auto-announce when event created
   autoAnnounceWinners Boolean @default(false) // Auto-announce when winners picked
   createdBy      String

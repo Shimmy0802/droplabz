@@ -176,7 +176,12 @@ function parseDiscordRequirements(discordReqs: any[]): {
             result.minServerJoinAgeDays = req.config.minDays;
         }
         if (req.type === 'DISCORD_ROLE_REQUIRED') {
-            result.requiredRoleIds = req.config.roleIds || [];
+            // Support both single roleId and array of roleIds
+            if (req.config.roleId) {
+                result.requiredRoleIds = [req.config.roleId];
+            } else if (req.config.roleIds) {
+                result.requiredRoleIds = req.config.roleIds;
+            }
         }
     }
 

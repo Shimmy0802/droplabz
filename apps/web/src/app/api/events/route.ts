@@ -20,6 +20,8 @@ const createEventSchema = z
         autoAssignDiscordRole: z.boolean().optional(),
         winnerDiscordRoleId: z.string().optional(),
         status: z.enum(['DRAFT', 'ACTIVE', 'CLOSED']).optional(),
+        mentionRoleIds: z.array(z.string()).optional(),
+        customAnnouncementLine: z.string().max(500).optional(),
         requirements: z
             .array(
                 z.object({
@@ -63,6 +65,8 @@ export async function POST(req: NextRequest) {
             autoAssignDiscordRole,
             winnerDiscordRoleId,
             status,
+            mentionRoleIds,
+            customAnnouncementLine,
             requirements,
         } = createEventSchema.parse(body);
 
@@ -120,6 +124,8 @@ export async function POST(req: NextRequest) {
                 reservedSpots: reservedSpots || 0,
                 autoAssignDiscordRole: autoAssignDiscordRole || false,
                 winnerDiscordRoleId,
+                mentionRoleIds: mentionRoleIds || [],
+                customAnnouncementLine,
                 createdBy: user.id,
                 requirements: requirements
                     ? {

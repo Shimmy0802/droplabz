@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { buildProfessionalEventEmbed, generateAnnouncementLine } from '@/lib/utils/event-embed-helpers';
 
 interface EventAnnouncementPanelProps {
     eventId: string;
@@ -8,6 +9,7 @@ interface EventAnnouncementPanelProps {
     eventTitle: string;
     eventDescription?: string;
     eventType: 'GIVEAWAY' | 'WHITELIST' | 'PRESALE' | 'COLLABORATION';
+    event?: any; // Full event object for building the actual embed preview
     onAnnouncementSent?: () => void;
 }
 
@@ -24,6 +26,7 @@ export function EventAnnouncementPanel({
     eventTitle,
     eventDescription,
     eventType,
+    event,
     onAnnouncementSent,
 }: EventAnnouncementPanelProps) {
     const [loading, setLoading] = useState(false);
@@ -67,15 +70,54 @@ export function EventAnnouncementPanel({
             </div>
 
             {/* Preview */}
-            <div className="bg-[#0a0e27] rounded p-4 space-y-2 border border-[rgba(0,212,255,0.1)]">
+            <div className="bg-[#0a0e27] rounded-lg border border-[rgba(0,212,255,0.1)] p-4 space-y-3">
                 <div className="text-sm text-gray-400">Preview:</div>
-                <div className="text-white font-semibold">
-                    {getEventEmoji(eventType)} {eventTitle}
-                </div>
-                {eventDescription && <div className="text-gray-300 text-sm">{eventDescription}</div>}
-                <div className="text-xs text-gray-500 mt-2">
-                    Type: {eventType.charAt(0) + eventType.slice(1).toLowerCase()}
-                </div>
+
+                {/* Announcement Line + Role Mentions */}
+                {event && (
+                    <div className="space-y-2">
+                        {/* Role mentions */}
+                        {event.mentionRoleIds && event.mentionRoleIds.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                {event.mentionRoleIds.map((roleId: string) => (
+                                    <span
+                                        key={roleId}
+                                        className="px-2 py-1 bg-[#5865f2] text-white text-xs rounded font-semibold"
+                                    >
+                                        @{roleId}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Announcement line */}
+                        <div className="text-gray-200 text-sm">
+                            {event.customAnnouncementLine || generateAnnouncementLine(event.type)}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="border-t border-[rgba(0,212,255,0.2)] my-3"></div>
+
+                        {/* Full Professional Embed Preview */}
+                        <EmbedPreview
+                            event={event}
+                            baseUrl={process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}
+                        />
+                    </div>
+                )}
+
+                {/* Fallback preview when full event data not available */}
+                {!event && (
+                    <>
+                        <div className="text-white font-semibold">
+                            {getEventEmoji(eventType)} {eventTitle}
+                        </div>
+                        {eventDescription && <div className="text-gray-300 text-sm">{eventDescription}</div>}
+                        <div className="text-xs text-gray-500 mt-2">
+                            Type: {eventType.charAt(0) + eventType.slice(1).toLowerCase()}
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Error */}
@@ -120,12 +162,67 @@ export function EventAnnouncementPanel({
     );
 }
 
+/**
+ * Render the full professional embed preview
+ */
+function EmbedPreview({ event, baseUrl }: { event: any; baseUrl: string }) {
+    const embed = buildProfessionalEventEmbed(event, event.community?.slug || '', baseUrl);
+
+    return (
+        <div
+            className="rounded-lg p-4 space-y-2 border-l-4"
+            style={{ borderColor: `#${embed.color?.toString(16).padStart(6, '0') || '00d4ff'}` }}
+        >
+            {/* Title */}
+            <div className="text-white font-bold text-base">{embed.title}</div>
+
+            {/* Description */}
+            {embed.description && (
+                <div className="text-gray-300 text-sm whitespace-pre-wrap">{embed.description.split('\n\n')[0]}</div>
+            )}
+
+            {/* Fields */}
+            {embed.fields && embed.fields.length > 0 && (
+                <div className="space-y-3 mt-3">
+                    {embed.fields.map((field, idx) => (
+                        <div key={idx} className="text-xs">
+                            {/* Skip divider-only fields but show dividers between sections */}
+                            {field.name === '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' ? (
+                                <div className="border-t border-[rgba(0,212,255,0.2)] my-2"></div>
+                            ) : !field.inline ? (
+                                <>
+                                    <div className="text-gray-400 font-semibold text-xs mb-1">{field.name}</div>
+                                    <div className="text-gray-300 text-xs ml-2 whitespace-pre-wrap">
+                                        {field.value.replace(/\*\*/g, '').replace(/\[|\]/g, '')}
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="inline-block mr-4">
+                                    <span className="text-gray-400 font-semibold text-xs">{field.name}</span>{' '}
+                                    <span className="text-gray-300 text-xs">{field.value}</span>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Footer */}
+            {embed.footer && (
+                <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-[rgba(0,212,255,0.2)]">
+                    {embed.footer.text}
+                </div>
+            )}
+        </div>
+    );
+}
+
 function getEventEmoji(type: string): string {
     const emojis: { [key: string]: string } = {
-        GIVEAWAY: '🎉',
-        WHITELIST: '✅',
-        PRESALE: '💰',
-        COLLABORATION: '🤝',
+        GIVEAWAY: '⚡',
+        WHITELIST: '🔐',
+        PRESALE: '⚙️',
+        COLLABORATION: '🔌',
     };
-    return emojis[type] || '📢';
+    return emojis[type] || '⚙️';
 }

@@ -138,14 +138,14 @@ export default function CommunitiesManagementPage() {
 
                 {/* Communities Table */}
                 {communities.length === 0 ? (
-                    <div className="text-center py-12 bg-[#111528] rounded border border-gray-700">
+                    <div className="text-center py-12 bg-[#111528] rounded border border-[rgba(0,255,65,0.1)]">
                         <p className="text-gray-400">No communities found</p>
                     </div>
                 ) : (
-                    <div className="bg-[#111528] rounded border border-gray-700 overflow-hidden">
+                    <div className="bg-[#111528] rounded border border-[rgba(0,255,65,0.1)] overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
-                                <thead className="bg-gray-900 border-b border-gray-700">
+                                <thead className="bg-[#0a0e27] border-b border-[rgba(0,255,65,0.1)]">
                                     <tr>
                                         <th className="px-6 py-3 text-left font-semibold text-white">Community</th>
                                         <th className="px-6 py-3 text-left font-semibold text-white">Owner</th>
@@ -157,13 +157,13 @@ export default function CommunitiesManagementPage() {
                                         <th className="px-6 py-3 text-right font-semibold text-white">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-700">
+                                <tbody className="divide-y divide-[rgba(0,255,65,0.05)]">
                                     {communities.map(community => (
-                                        <tr key={community.id} className="hover:bg-gray-900/50 transition">
+                                        <tr key={community.id} className="hover:bg-[rgba(0,255,65,0.03)] transition">
                                             <td className="px-6 py-4">
                                                 <Link
                                                     href={`/profile/admin/communities/${community.id}`}
-                                                    className="text-white font-semibold hover:text-[#00ff41]"
+                                                    className="text-white font-semibold hover:text-[#00ff41] transition"
                                                 >
                                                     {community.name}
                                                 </Link>
@@ -176,7 +176,7 @@ export default function CommunitiesManagementPage() {
                                                 <p className="text-gray-400 text-xs">{community.owner.email}</p>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="inline-block px-3 py-1 rounded text-xs font-semibold bg-blue-500/20 text-blue-300">
+                                                <span className="inline-block px-3 py-1 rounded text-xs font-semibold bg-[rgba(0,212,255,0.15)] text-[#00d4ff]">
                                                     {community.subscription?.tier || 'FREE'}
                                                 </span>
                                             </td>

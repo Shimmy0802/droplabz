@@ -345,7 +345,7 @@ export default function CommunityAdminPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-6">
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div>
@@ -355,36 +355,36 @@ export default function CommunityAdminPage() {
                 </div>
                 <Link
                     href="/profile/communities"
-                    className="px-4 py-2 bg-gray-900 border border-gray-700 text-white rounded-lg hover:border-gray-600"
+                    className="px-4 py-2 bg-[#111528] border border-[rgba(0,212,255,0.2)] text-white rounded-lg hover:border-[#00d4ff] hover:text-[#00d4ff] transition"
                 >
-                    Back
+                    ← Back
                 </Link>
             </div>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-4 bg-gray-900/40 border border-gray-700 rounded-lg">
+                <div className="p-4 bg-[#111528] border border-[rgba(0,255,65,0.1)] rounded-lg">
                     <p className="text-gray-400 text-sm mb-2">Members</p>
                     <p className="text-3xl font-bold text-[#00ff41]">{community._count.members}</p>
                 </div>
-                <div className="p-4 bg-gray-900/40 border border-gray-700 rounded-lg">
+                <div className="p-4 bg-[#111528] border border-[rgba(0,212,255,0.1)] rounded-lg">
                     <p className="text-gray-400 text-sm mb-2">Discord Status</p>
                     <p className="text-xl font-semibold text-gray-300">
                         {community.guildId ? '✓ Connected' : '○ Not Connected'}
                     </p>
                 </div>
-                <div className="p-4 bg-gray-900/40 border border-gray-700 rounded-lg">
+                <div className="p-4 bg-[#111528] border border-[rgba(0,255,65,0.1)] rounded-lg">
                     <p className="text-gray-400 text-sm mb-2">Community ID</p>
                     <p className="text-xs font-mono text-gray-400 break-all">{community.id}</p>
                 </div>
-                <div className="p-4 bg-gray-900/40 border border-gray-700 rounded-lg">
+                <div className="p-4 bg-[#111528] border border-[rgba(0,255,65,0.1)] rounded-lg">
                     <p className="text-gray-400 text-sm mb-2">Slug</p>
                     <p className="text-lg font-semibold text-white">{community.slug}</p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-gray-700">
+            <div className="border-b border-[rgba(0,255,65,0.1)]">
                 <div className="flex gap-8">
                     {(['overview', 'whitelists', 'presales', 'settings'] as const).map(tabName => (
                         <button
@@ -406,7 +406,7 @@ export default function CommunityAdminPage() {
             <div className="space-y-6">
                 {tab === 'overview' && (
                     <div className="grid gap-6">
-                        <div className="p-6 bg-gray-900/40 border border-gray-700 rounded-lg">
+                        <div className="p-6 bg-[#111528] border border-[rgba(0,255,65,0.1)] rounded-lg">
                             <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
                             <div className="flex flex-wrap gap-3">
                                 <Link
@@ -433,7 +433,7 @@ export default function CommunityAdminPage() {
                             </div>
                         </div>
 
-                        <div className="p-6 bg-gray-900/40 border border-gray-700 rounded-lg">
+                        <div className="p-6 bg-[#111528] border border-[rgba(0,255,65,0.1)] rounded-lg">
                             <h3 className="text-lg font-bold text-white mb-4">Getting Started</h3>
                             <ol className="space-y-3 text-gray-300 list-decimal list-inside">
                                 <li>Configure your community settings (Discord, Solana)</li>
@@ -449,7 +449,7 @@ export default function CommunityAdminPage() {
                 {tab === 'whitelists' && (
                     <div className="space-y-6">
                         {!showCreateWhitelist ? (
-                            <div className="p-6 bg-gray-900/40 border border-gray-700 rounded-lg">
+                            <div className="p-6 bg-[#111528] border border-[rgba(0,255,65,0.1)] rounded-lg">
                                 <div className="flex items-center justify-between mb-6">
                                     <div>
                                         <h2 className="text-xl font-bold text-white">Whitelists</h2>
@@ -469,7 +469,7 @@ export default function CommunityAdminPage() {
                                 {loadingWhitelists ? (
                                     <div className="space-y-3">
                                         {[1, 2, 3].map(i => (
-                                            <div key={i} className="h-20 bg-gray-800 rounded animate-pulse" />
+                                            <div key={i} className="h-20 bg-[#0a0e27] rounded animate-pulse" />
                                         ))}
                                     </div>
                                 ) : whitelists.length === 0 ? (
@@ -484,7 +484,7 @@ export default function CommunityAdminPage() {
                                         {whitelists.map(whitelist => (
                                             <div
                                                 key={whitelist.id}
-                                                className="p-4 bg-gray-800 border border-gray-700 rounded-lg hover:border-gray-600 transition"
+                                                className="p-4 bg-[#0a0e27] border border-[rgba(0,255,65,0.1)] rounded-lg hover:border-[#00d4ff] transition"
                                             >
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
@@ -495,7 +495,7 @@ export default function CommunityAdminPage() {
                                                             <span
                                                                 className={`px-2 py-1 text-xs font-medium rounded-full ${
                                                                     whitelist.status === 'ACTIVE'
-                                                                        ? 'bg-green-900/30 text-green-400 border border-green-700'
+                                                                        ? 'bg-[rgba(0,255,65,0.15)] text-[#00ff41] border border-[rgba(0,255,65,0.2)]'
                                                                         : whitelist.status === 'CLOSED'
                                                                           ? 'bg-red-900/30 text-red-400 border border-red-700'
                                                                           : 'bg-gray-700 text-gray-300 border border-gray-600'

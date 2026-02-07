@@ -45,6 +45,8 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
         endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         endTime: '23:59',
         imageUrl: '',
+        mentionRoleIds: [] as string[],
+        customAnnouncementLine: '',
     });
 
     // Fetch Discord roles when guildId is available
@@ -142,7 +144,7 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
         };
 
         if (type === 'DISCORD_ROLE_REQUIRED') {
-            newReq.config = { roleId: '' };
+            newReq.config = { roleId: '', roleName: '' };
         } else if (type === 'DISCORD_ACCOUNT_AGE_DAYS') {
             newReq.config = { days: 0 };
         } else if (type === 'SOLANA_TOKEN_HOLDING') {
@@ -185,8 +187,16 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
                 throw new Error('Max winners must be at least 1');
             }
 
-            const startDateTime = new Date(`${formData.startDate}T${formData.startTime}:00Z`);
-            const endDateTime = new Date(`${formData.endDate}T${formData.endTime}:00Z`);
+            // Validate Discord role requirements have roleId selected
+            const discordRoleReqs = requirements.filter(r => r.type === 'DISCORD_ROLE_REQUIRED');
+            for (const req of discordRoleReqs) {
+                if (!req.config.roleId || req.config.roleId.trim() === '') {
+                    throw new Error('Discord role requirement must have a role selected');
+                }
+            }
+
+            const startDateTime = new Date(`${formData.startDate}T${formData.startTime}:00`);
+            const endDateTime = new Date(`${formData.endDate}T${formData.endTime}:00`);
 
             if (startDateTime >= endDateTime) {
                 throw new Error('End date must be after start date');
@@ -228,6 +238,8 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
                     selectionMode: formData.selectionMode,
                     status: 'ACTIVE',
                     requirements: allRequirements,
+                    mentionRoleIds: formData.mentionRoleIds,
+                    customAnnouncementLine: formData.customAnnouncementLine || undefined,
                 }),
             });
 
@@ -442,6 +454,112 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
                 </div>
             </div>
 
+            {/* Discord Announcement Section */}
+            <div className="space-y-6">
+                <h3 className="text-xl font-semibold text-white">Discord Announcement</h3>
+                <p className="text-sm text-gray-400">
+                    Customize how this event will be announced in your Discord server
+                </p>
+
+                {/* Mention Roles */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-3">
+                        Role(s) to Mention (Optional)
+                    </label>
+                    <p className="text-xs text-gray-400 mb-3">
+                        Select which Discord roles to tag when announcing this event
+                    </p>
+                    {guildId && discordRoles.length > 0 ? (
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {discordRoles.map(role => (
+                                <label key={role.id} className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.mentionRoleIds.includes(role.id)}
+                                        onChange={e => {
+                                            if (e.target.checked) {
+                                                setFormData({
+                                                    ...formData,
+                                                    mentionRoleIds: [...formData.mentionRoleIds, role.id],
+                                                });
+                                            } else {
+                                                setFormData({
+                                                    ...formData,
+                                                    mentionRoleIds: formData.mentionRoleIds.filter(
+                                                        id => id !== role.id,
+                                                    ),
+                                                });
+                                            }
+                                        }}
+                                        className="w-4 h-4 rounded border-[#00d4ff]/30 text-[#00ff41] cursor-pointer"
+                                    />
+                                    <span className="ml-3 text-sm text-gray-300">
+                                        {role.name} {role.managed ? '(Managed)' : ''}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    ) : loadingRoles ? (
+                        <p className="text-sm text-gray-400">Loading roles...</p>
+                    ) : (
+                        <p className="text-sm text-gray-400">
+                            {guildId
+                                ? 'No roles found in your Discord server'
+                                : 'Connect Discord server in Community Settings to select roles'}
+                        </p>
+                    )}
+                    {formData.mentionRoleIds.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            {formData.mentionRoleIds.map(roleId => {
+                                const role = discordRoles.find(r => r.id === roleId);
+                                return (
+                                    <div
+                                        key={roleId}
+                                        className="inline-flex items-center gap-2 px-3 py-1 bg-[#00d4ff]/20 text-[#00d4ff] rounded-full text-sm"
+                                    >
+                                        <span>@{role?.name || roleId}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData({
+                                                    ...formData,
+                                                    mentionRoleIds: formData.mentionRoleIds.filter(id => id !== roleId),
+                                                });
+                                            }}
+                                            className="hover:text-[#00ff41]"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* Custom Announcement Line */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Custom Announcement (Optional)
+                    </label>
+                    <p className="text-xs text-gray-400 mb-3">
+                        Override the auto-generated announcement. Leave empty to use a creative auto-generated line
+                    </p>
+                    <textarea
+                        value={formData.customAnnouncementLine}
+                        onChange={e => setFormData({ ...formData, customAnnouncementLine: e.target.value })}
+                        placeholder="E.g., 🎁 Limited-time giveaway for our loyal members — claim your spot now!"
+                        rows={2}
+                        className="w-full px-4 py-2 bg-[#111528] border border-[#00d4ff]/30 rounded-lg text-white placeholder-gray-500 focus:border-[#00ff41] focus:outline-none"
+                    />
+                    <p className="text-xs text-gray-400 mt-2">
+                        {formData.customAnnouncementLine
+                            ? 'Your custom announcement will be used'
+                            : 'A creative announcement line will be auto-generated based on event type'}
+                    </p>
+                </div>
+            </div>
+
             {/* Requirements Section */}
             <div className="space-y-6">
                 <div className="flex justify-between items-center">
@@ -493,7 +611,14 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
                                     {guildId && discordRoles.length > 0 ? (
                                         <select
                                             value={req.config.roleId || ''}
-                                            onChange={e => handleRequirementChange(req.id, 'roleId', e.target.value)}
+                                            onChange={e => {
+                                                const roleId = e.target.value;
+                                                const selectedRole = discordRoles.find(r => r.id === roleId);
+                                                handleRequirementChange(req.id, 'roleId', roleId);
+                                                if (selectedRole) {
+                                                    handleRequirementChange(req.id, 'roleName', selectedRole.name);
+                                                }
+                                            }}
                                             className="w-full mt-1 px-3 py-2 bg-[#111528] border border-[#00d4ff]/20 rounded text-white text-sm focus:border-[#00ff41] focus:outline-none"
                                             disabled={loadingRoles}
                                         >

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { requireAuth, getCurrentUser } from '@/lib/auth/middleware';
 import { db } from '@/lib/db';
 import { ApiError, apiResponse, apiError } from '@/lib/api-utils';
-import { buildProfessionalEventEmbed } from '@/lib/utils/event-embed-helpers';
+import { buildProfessionalEventEmbed, generateAnnouncementLine } from '@/lib/utils/event-embed-helpers';
 import { z } from 'zod';
 
 const announceSchema = z.object({
@@ -322,6 +322,22 @@ async function postAnnouncementToBot(event: any): Promise<{ messageId: string; u
 
         console.log(`[announce] Posting to Discord bot API: ${botUrl}`);
 
+        // Use custom announcement line if provided, otherwise generate one
+        let content = event.customAnnouncementLine || generateAnnouncementLine(event.type);
+        const mentionRoleIds = event.mentionRoleIds || [];
+
+        // Add role mentions to the message content (Discord format: <@&ROLE_ID>)
+        if (mentionRoleIds.length > 0) {
+            const roleMentions = mentionRoleIds.map(roleId => `<@&${roleId}>`).join(' ');
+            content = `${roleMentions}\n${content}`;
+        }
+
+        console.log('[announce] Announcement context:', {
+            content: content.substring(0, 50) + '...',
+            mentionRoleIds,
+            isCustom: !!event.customAnnouncementLine,
+        });
+
         const response = await fetch(botUrl, {
             method: 'POST',
             headers: {
@@ -331,6 +347,8 @@ async function postAnnouncementToBot(event: any): Promise<{ messageId: string; u
                 guildId: event.community.guildId,
                 channelId: event.community.discordAnnouncementChannelId,
                 embed,
+                content,
+                mentionRoleIds,
             }),
             timeout: 10000, // 10 second timeout
         });

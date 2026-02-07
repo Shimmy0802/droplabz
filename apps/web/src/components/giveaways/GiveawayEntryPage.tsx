@@ -302,8 +302,6 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
         );
     }
 
-    const spotsRemaining =
-        eventDetails.maxWinners - (eventDetails.reservedSpots || 0) - (eventDetails._count?.winners || 0);
     const allRequirementsMet = requirementStatuses.every(r => r.isMet || r.type.includes('DISCORD'));
 
     return (
@@ -387,12 +385,6 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
                     )}
 
                     <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-400">Spots Available</span>
-                            <span className="text-lg font-bold text-[#00ff41]">
-                                {spotsRemaining} / {eventDetails.maxWinners - (eventDetails.reservedSpots || 0)}
-                            </span>
-                        </div>
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-gray-400">Selection Mode</span>
                             <span className="text-sm font-semibold text-[#00d4ff]">{eventDetails.selectionMode}</span>

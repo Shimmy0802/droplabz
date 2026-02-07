@@ -68,7 +68,6 @@ export function EventCard({ event, showType = true }: EventCardProps) {
                             alt={event.title}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
-                            style={{ width: 'auto', height: 'auto' }}
                         />
                     ) : (
                         <div

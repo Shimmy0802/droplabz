@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth, requireCommunityAdmin } from '@/lib/auth/middleware';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 
 const querySchema = z.object({
-    limit: z.string().optional().default('20').transform(Number),
-    offset: z.string().optional().default('0').transform(Number),
+    limit: z.string().nullish().default('20').transform(Number),
+    offset: z.string().nullish().default('0').transform(Number),
     page: z
         .string()
-        .optional()
+        .nullish()
         .transform(val => (val ? Number(val) : undefined)),
-    filter: z.string().optional(),
-    search: z.string().optional(),
-    userId: z.string().optional(),
-    role: z.enum(['OWNER', 'ADMIN', 'MODERATOR', 'MEMBER']).optional(),
+    filter: z.string().nullish(),
+    search: z.string().nullish(),
+    userId: z.string().nullish(),
+    role: z.enum(['OWNER', 'ADMIN', 'MODERATOR', 'MEMBER']).nullish(),
 });
 
 /**
@@ -26,9 +25,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
         // If userId is provided, returns specific member info
         const { communityId } = await params;
 
+        if (!communityId) {
+            console.error('[Members] Missing communityId parameter');
+            return NextResponse.json({ error: 'Missing communityId' }, { status: 400 });
+        }
+
         // Parse query params
         const searchParams = req.nextUrl.searchParams;
-        const { limit, offset, page, filter, search, userId, role } = querySchema.parse({
+        const parsed = querySchema.parse({
             limit: searchParams.get('limit'),
             offset: searchParams.get('offset'),
             page: searchParams.get('page'),
@@ -37,22 +41,31 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
             userId: searchParams.get('userId'),
             role: searchParams.get('role'),
         });
+        const { limit, offset, page, filter, search, userId, role } = parsed;
 
         // Calculate offset from page if provided
         const actualOffset = page ? (page - 1) * limit : offset;
 
         // Build where clause
-        const where: any = { communityId };
-        if (userId) where.userId = userId;
-        if (role) where.role = role;
+        const where: any = {
+            communityId,
+        };
+
+        if (userId) {
+            where.userId = userId;
+        }
+
+        if (role) {
+            where.role = role;
+        }
 
         // Handle filter parameter
         if (filter && filter !== 'ALL') {
-            where.role = filter as any;
+            where.role = filter;
         }
 
         // Handle search parameter
-        if (search) {
+        if (search?.trim()) {
             where.user = {
                 OR: [
                     { email: { contains: search, mode: 'insensitive' } },
@@ -61,6 +74,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
                 ],
             };
         }
+
+        console.log('[Members] Query params:', {
+            communityId,
+            limit,
+            offset: actualOffset,
+            hasSearch: !!search,
+        });
 
         // Get members
         const members = await db.communityMember.findMany({
@@ -71,6 +91,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
                         id: true,
                         email: true,
                         discordId: true,
+                        username: true,
+                        discordUsername: true,
                     },
                 },
             },
@@ -80,6 +102,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
         });
 
         const total = await db.communityMember.count({ where });
+
+        console.log('[Members] Found', members.length, 'members, total:', total);
 
         return NextResponse.json({
             data: members,
@@ -92,7 +116,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
             },
         });
     } catch (error) {
-        console.error('Error fetching members:', error);
-        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+        console.error('[Members] Error:', {
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        });
+        return NextResponse.json(
+            {
+                error: 'Failed to fetch members',
+                details: error instanceof Error ? error.message : String(error),
+            },
+            { status: 500 },
+        );
     }
 }
