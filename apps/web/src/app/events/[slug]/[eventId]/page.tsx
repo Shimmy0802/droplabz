@@ -7,6 +7,30 @@ import Image from 'next/image';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWalletState } from '@/lib/wallet';
 
+// Helper function to convert requirement types to friendly display names
+function getRequirementDisplayName(requirement: any): string {
+    const { type, config } = requirement;
+
+    switch (type) {
+        case 'SOLANA_WALLET_CONNECTED':
+            return 'Linked Solana Wallet';
+        case 'DISCORD_ROLE_REQUIRED':
+            return config?.roleName ? `Discord Role: ${config.roleName}` : 'Discord Role';
+        case 'DISCORD_MEMBER_REQUIRED':
+            return 'Discord Server Member';
+        case 'DISCORD_ACCOUNT_AGE_DAYS':
+            return `Discord Account (${config?.days || 0}+ days old)`;
+        case 'DISCORD_SERVER_JOIN_AGE_DAYS':
+            return `Server Member (${config?.days || 0}+ days)`;
+        case 'SOLANA_TOKEN_HOLDING':
+            return `Hold ${config?.amount || 0} ${config?.symbol || 'tokens'}`;
+        case 'SOLANA_NFT_OWNERSHIP':
+            return `Own NFT from ${config?.collectionName || 'collection'}`;
+        default:
+            return type.replace(/_/g, ' ');
+    }
+}
+
 interface Event {
     id: string;
     title: string;
@@ -45,6 +69,7 @@ export default function EventDetailPage() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [requirementsMet, setRequirementsMet] = useState<Record<string, boolean>>({});
 
     // Fetch event data
     useEffect(() => {
@@ -66,6 +91,27 @@ export default function EventDetailPage() {
 
         fetchEvent();
     }, [eventId]);
+
+    // Verify requirements when event or wallet state changes
+    useEffect(() => {
+        if (!event?.requirements) return;
+
+        const met: Record<string, boolean> = {};
+
+        for (const req of event.requirements) {
+            if (req.type === 'SOLANA_WALLET_CONNECTED') {
+                met[req.id] = connected && !!publicKey;
+            } else if (req.type === 'DISCORD_ROLE_REQUIRED') {
+                // Discord roles need server-side verification
+                met[req.id] = false; // Will be verified on submission
+            } else {
+                // Other requirements
+                met[req.id] = false; // Verified on submission
+            }
+        }
+
+        setRequirementsMet(met);
+    }, [event?.requirements, connected, publicKey]);
 
     const handleSubmitEntry = async () => {
         if (!publicKey) {
@@ -261,21 +307,50 @@ export default function EventDetailPage() {
                                     <span>🔐</span> Requirements
                                 </h2>
                                 <div className="space-y-3">
-                                    {event.requirements.map(req => (
-                                        <div
-                                            key={req.id}
-                                            className="bg-[rgba(0,212,255,0.1)] border-l-4 border-[#00d4ff] p-4 rounded"
-                                        >
-                                            <p className="font-semibold text-[#00d4ff]">{req.type}</p>
-                                            {typeof req.config === 'object' && Object.keys(req.config).length > 0 && (
-                                                <p className="text-gray-300 text-sm mt-1">
-                                                    {Object.entries(req.config)
-                                                        .map(([key, val]) => `${key}: ${val}`)
-                                                        .join(', ')}
+                                    {event.requirements.map(req => {
+                                        const isMet = requirementsMet[req.id] ?? false;
+                                        return (
+                                            <div
+                                                key={req.id}
+                                                className={`flex items-center justify-between p-4 rounded border-l-4 transition ${
+                                                    isMet
+                                                        ? 'bg-[rgba(0,255,65,0.1)] border-[#00ff41]'
+                                                        : 'bg-[rgba(0,212,255,0.1)] border-[#00d4ff]'
+                                                }`}
+                                            >
+                                                <p
+                                                    className={`font-semibold ${isMet ? 'text-[#00ff41]' : 'text-[#00d4ff]'}`}
+                                                >
+                                                    {getRequirementDisplayName(req)}
                                                 </p>
-                                            )}
-                                        </div>
-                                    ))}
+                                                {isMet ? (
+                                                    <svg
+                                                        className="w-5 h-5 text-[#00ff41]"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 20 20"
+                                                    >
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                ) : (
+                                                    <svg
+                                                        className="w-5 h-5 text-red-400"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 20 20"
+                                                    >
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
