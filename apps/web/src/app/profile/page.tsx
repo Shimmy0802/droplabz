@@ -39,14 +39,18 @@ export default function ProfilePage() {
         if (session?.user) {
             fetchLinkedWallets();
             // Fetch Discord username
-            fetch('/api/users/me')
-                .then(res => res.json())
-                .then(data => {
+            (async () => {
+                try {
+                    const res = await fetch('/api/users/me');
+                    if (!res.ok) return;
+                    const data = await res.json();
                     if (data.user?.discordUsername) {
                         setDiscordUsername(data.user.discordUsername);
                     }
-                })
-                .catch(err => console.error('Failed to fetch Discord username:', err));
+                } catch {
+                    // Silently fail - Discord username is optional
+                }
+            })();
         }
     }, [session]);
 

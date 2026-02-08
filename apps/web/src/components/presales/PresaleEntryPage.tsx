@@ -47,8 +47,14 @@ export function PresaleEntryPage({ eventId }: PresaleEntryPageProps) {
             try {
                 const response = await fetch(`/api/events/${eventId}`);
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || errorData.message || 'Failed to load presale');
+                    let errorMessage = 'Failed to load presale';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorData.message || errorMessage;
+                    } catch {
+                        // If JSON parsing fails, use default error message
+                    }
+                    throw new Error(errorMessage);
                 }
                 const data = await response.json();
                 // API returns { event, total, limit, offset }

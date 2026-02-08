@@ -47,8 +47,14 @@ export function WhitelistEntryPage({ eventId }: WhitelistEntryPageProps) {
             try {
                 const response = await fetch(`/api/events/${eventId}`);
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || errorData.message || 'Failed to load whitelist');
+                    let errorMessage = 'Failed to load whitelist';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorData.message || errorMessage;
+                    } catch {
+                        // JSON parse failed, use default message
+                    }
+                    throw new Error(errorMessage);
                 }
                 const data = await response.json();
                 // API returns { event, total, limit, offset }

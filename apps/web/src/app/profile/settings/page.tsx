@@ -42,17 +42,29 @@ export default function ProfileSettings() {
     // Fetch Discord username if user is linked to Discord
     useEffect(() => {
         if (session?.user?.id) {
-            fetch('/api/users/me')
-                .then(res => res.json())
-                .then(data => {
+            const controller = new AbortController();
+
+            (async () => {
+                try {
+                    const res = await fetch('/api/users/me', { signal: controller.signal });
+                    if (!res.ok) throw new Error('Failed to fetch user profile');
+
+                    const data = await res.json();
                     if (data.user?.discordUsername) {
                         dispatch({ type: 'SET_DISCORD_USERNAME', payload: data.user.discordUsername });
                     }
                     if (typeof data.user?.hasPassword === 'boolean') {
                         dispatch({ type: 'SET_HAS_PASSWORD', payload: data.user.hasPassword });
                     }
-                })
-                .catch(err => console.error('Failed to fetch user profile:', err));
+                } catch (err) {
+                    if (err instanceof Error && err.name !== 'AbortError') {
+                        // Silently fail - it's okay if we can't fetch this data
+                        // User can still use the page
+                    }
+                }
+            })();
+
+            return () => controller.abort();
         }
     }, [dispatch, session]);
 

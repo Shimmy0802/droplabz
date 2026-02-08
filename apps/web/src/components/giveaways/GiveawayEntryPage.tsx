@@ -110,8 +110,14 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                setDiscordVerificationError(errorData.error || 'Unable to verify Discord guild membership');
+                let errorMessage = 'Unable to verify Discord guild membership';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorMessage;
+                } catch {
+                    // JSON parse failed, use default message
+                }
+                setDiscordVerificationError(errorMessage);
             }
         } catch (err) {
             console.error('Discord guild verification error:', err);
@@ -127,8 +133,14 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
             try {
                 const response = await fetch(`/api/events/${eventId}`);
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || errorData.message || 'Failed to load giveaway');
+                    let errorMessage = 'Failed to load giveaway';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorData.message || errorMessage;
+                    } catch {
+                        // JSON parse failed, use default message
+                    }
+                    throw new Error(errorMessage);
                 }
                 const data = await response.json();
                 setEventDetails(data.event || data);
