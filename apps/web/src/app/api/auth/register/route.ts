@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { apiResponse, apiError, ApiError } from '@/lib/api-utils';
+import { registerRateLimiter, getClientIp, createRateLimitResponse } from '@/lib/rate-limit';
 import { hash } from 'bcryptjs';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
@@ -7,6 +8,7 @@ import { z } from 'zod';
 /**
  * User registration endpoint
  * POST /api/auth/register
+ * Rate limited: 3 registrations per hour per IP
  */
 
 const registerSchema = z.object({
@@ -17,6 +19,14 @@ const registerSchema = z.object({
 
 export async function POST(request: NextRequest) {
     try {
+        // Apply rate limiting
+        const clientIp = getClientIp(request);
+        if (!registerRateLimiter.isAllowed(clientIp)) {
+            const remaining = registerRateLimiter.getRemaining(clientIp);
+            const resetTime = registerRateLimiter.getResetTime(clientIp);
+            return createRateLimitResponse(remaining, resetTime);
+        }
+
         const body = await request.json();
         const input = registerSchema.parse(body);
 

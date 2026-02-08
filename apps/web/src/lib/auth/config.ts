@@ -10,6 +10,11 @@ import { z } from 'zod';
  * Supports multiple authentication methods:
  * - Email/password (Credentials provider)
  * - Discord OAuth (Discord provider)
+ *
+ * NOTE: Rate limiting for email/password login attempts should be implemented at:
+ * - Proxy/middleware level (Vercel edge functions or Node server middleware)
+ * - Or via a custom login endpoint that checks rate limits before NextAuth
+ * - Currently rate limiting is applied to registration endpoint only
  */
 
 const credentialsSchema = z.object({
