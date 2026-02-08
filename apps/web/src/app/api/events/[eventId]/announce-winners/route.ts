@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: { eventId: st
     try {
         // Authenticate user
         await requireAuth();
-        
+
         const validatedEventId = validateCuid(params.eventId, 'eventId');
 
         // Parse and validate request

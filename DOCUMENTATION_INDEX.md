@@ -159,9 +159,9 @@ Documentation is maintained as code. To update:
 
 Completed work, phase summaries, and resolved investigations are stored in [`/docs/archived/`](./docs/archived/) including:
 
-- **Deployment fixes** — VERCEL_*.md, REGISTRY_*.md (reference only; production is live)
-- **Phase summaries** — PHASE_*.md (completed work summaries)
-- **Discord setup investigations** — DISCORD_WIZARD_*.md, DISCORD_BOT_*.md (all resolved; code is live)
+- **Deployment fixes** — VERCEL*\*.md, REGISTRY*\*.md (reference only; production is live)
+- **Phase summaries** — PHASE\_\*.md (completed work summaries)
+- **Discord setup investigations** — DISCORD*WIZARD*_.md, DISCORD*BOT*_.md (all resolved; code is live)
 - **Other completed work** — Event time fixes, winner announcements, embed builders, etc.
 
 **These are for reference only.** Active development focuses on the core documentation in the root and `/docs/guides/`.

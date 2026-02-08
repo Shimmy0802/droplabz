@@ -35,11 +35,7 @@ export function createVerificationMessage(walletAddress: string, nonce: string):
  * @param publicKey Wallet public key that allegedly signed
  * @returns boolean indicating if signature is valid
  */
-export async function verifySignedMessage(
-    message: string,
-    signature: string,
-    publicKey: PublicKey,
-): Promise<boolean> {
+export async function verifySignedMessage(message: string, signature: string, publicKey: PublicKey): Promise<boolean> {
     try {
         // Use nacl to verify the signature
         const messageBytes = Buffer.from(message, 'utf-8');

@@ -2,13 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireCommunityAdmin } from '@/lib/auth/middleware';
 import { ApiError } from '@/lib/api-utils';
-import { verifyDiscordRequirements, verifySolanaRequirements } from '@/lib/verification/entry-verifier';import { validateCuid } from '@/lib/api-utils';import { z } from 'zod';
-
-const createPresaleEntrySchema = z.object({
-    presaleId: z.string().cuid(),
-    walletAddress: z.string(),
-    discordUserId: z.string().optional(),
-});
+import { verifyDiscordRequirements, verifySolanaRequirements } from '@/lib/verification/entry-verifier';
+import { validateCuid } from '@/lib/api-utils';
+import { z } from 'zod';
+import { createEntrySchema } from '@/lib/validation';
 
 /**
  * POST /api/presales/[presaleId]/entries
@@ -19,7 +16,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pre
         const { presaleId } = await params;
         const validatedPresaleId = validateCuid(presaleId, 'presaleId');
         const body = await req.json();
-        const { walletAddress, discordUserId } = createPresaleEntrySchema
+        const { walletAddress, discordUserId } = createEntrySchema
             .pick({
                 walletAddress: true,
                 discordUserId: true,

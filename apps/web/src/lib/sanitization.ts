@@ -53,9 +53,7 @@ export function sanitizeText(input: string, options: { maxLength?: number; patte
  * Returns a Zod string schema with built-in sanitization
  */
 export function sanitizedText(maxLength = 1000, pattern?: RegExp) {
-    return (
-        unsafeString: string,
-    ) => {
+    return (unsafeString: string) => {
         try {
             return sanitizeText(unsafeString, { maxLength, pattern });
         } catch (error) {

@@ -45,8 +45,7 @@ export async function extractErrorData(response: Response): Promise<Record<strin
 export async function assertResponseOk(response: Response, errorMessage?: string): Promise<void> {
     if (!response.ok) {
         const errorData = await extractErrorData(response);
-        const message =
-            errorMessage || (typeof errorData.message === 'string' ? errorData.message : 'Request failed');
+        const message = errorMessage || (typeof errorData.message === 'string' ? errorData.message : 'Request failed');
         const error = new Error(message);
         (error as any).status = response.status;
         (error as any).data = errorData;

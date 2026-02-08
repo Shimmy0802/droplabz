@@ -4,46 +4,7 @@ import { db } from '@/lib/db';
 import { ApiError } from '@/lib/api-utils';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
-
-const createEventSchema = z
-    .object({
-        communityId: z.string().cuid(),
-        type: z.enum(['WHITELIST', 'PRESALE', 'COLLABORATION', 'GIVEAWAY']),
-        title: z.string().min(1).max(200),
-        description: z.string().max(1000).optional(),
-        prize: z.string().max(500).optional(),
-        imageUrl: z.string().optional(),
-        endAt: z.string().datetime(),
-        maxWinners: z.number().int().min(1).optional(),
-        selectionMode: z.enum(['RANDOM', 'MANUAL', 'FCFS']).optional(),
-        reservedSpots: z.number().int().min(0).optional(),
-        autoAssignDiscordRole: z.boolean().optional(),
-        winnerDiscordRoleId: z.string().optional(),
-        status: z.enum(['DRAFT', 'ACTIVE', 'CLOSED']).optional(),
-        mentionRoleIds: z.array(z.string()).optional(),
-        customAnnouncementLine: z.string().max(500).optional(),
-        requirements: z
-            .array(
-                z.object({
-                    type: z.string(),
-                    config: z.record(z.string(), z.unknown()),
-                }),
-            )
-            .optional(),
-    })
-    .refine(
-        data => {
-            // If FCFS, maxWinners is required
-            if (data.selectionMode === 'FCFS' && !data.maxWinners) {
-                return false;
-            }
-            return true;
-        },
-        {
-            message: 'Max entry capacity is required for FCFS selection mode',
-            path: ['maxWinners'],
-        },
-    );
+import { createEventSchema } from '@/lib/validation';
 
 export async function POST(req: NextRequest) {
     try {

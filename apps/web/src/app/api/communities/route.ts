@@ -3,38 +3,7 @@ import { getCurrentUser } from '@/lib/auth/middleware';
 import { apiResponse, apiError, ApiError } from '@/lib/api-utils';
 import { db } from '@/lib/db';
 import { z } from 'zod';
-
-// Zod schema for community creation
-const createCommunitySchema = z.object({
-    name: z.string().min(1, 'Community name is required').max(100, 'Name too long'),
-    slug: z
-        .string()
-        .min(1, 'Slug is required')
-        .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens')
-        .max(50, 'Slug too long'),
-    types: z
-        .array(z.string())
-        .min(1, 'Select at least one community type')
-        .max(10, 'Too many types selected'),
-    description: z.string().max(500, 'Description too long').optional(),
-    discordGuildId: z.string().optional(),
-    socials: z.record(z.string(), z.string()).optional(),
-    settings: z
-        .object({
-            discord: z
-                .object({
-                    announcementChannelId: z.string().optional(),
-                    giveawayChannelId: z.string().optional(),
-                    giveawayEntryChannelId: z.string().optional(),
-                    winnerChannelId: z.string().optional(),
-                    adminChannelId: z.string().optional(),
-                })
-                .optional(),
-        })
-        .optional(),
-    logo: z.string().optional(), // Base64 encoded image
-    banner: z.string().optional(), // Base64 encoded image
-});
+import { createCommunitySchema } from '@/lib/validation';
 
 /**
  * Convert FormData to object

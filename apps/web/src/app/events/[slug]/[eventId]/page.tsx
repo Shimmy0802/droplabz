@@ -96,7 +96,6 @@ export default function EventDetailPage() {
         fetchEvent();
     }, [eventId]);
 
-
     // Auto-populate Discord link from session if user logged in via Discord
     useEffect(() => {
         if (session && session.discordId) {
