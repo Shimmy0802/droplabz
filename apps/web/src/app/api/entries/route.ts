@@ -7,6 +7,9 @@ import { verifyAndUpdateEntry } from '@/lib/verification/entry-verifier';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
+// Constants
+const SYSTEM_PICKER_FCFS = 'SYSTEM_FCFS';
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -99,7 +102,7 @@ export async function POST(request: NextRequest) {
                     data: {
                         eventId: input.eventId,
                         entryId: entry.id,
-                        pickedBy: 'SYSTEM_FCFS',
+                        pickedBy: SYSTEM_PICKER_FCFS,
                     },
                 });
             }
