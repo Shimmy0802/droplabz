@@ -156,7 +156,7 @@ export default function CommunityPage({ params }: { params: Promise<{ slug: stri
                 setIsMember(true);
                 const userMember = memberData.data[0];
                 // Check if user is admin - use current session state
-                const isSuperAdmin = (session?.user as any)?.role === 'SUPER_ADMIN';
+                const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
                 const isAdminRole = userMember.role === 'OWNER' || userMember.role === 'ADMIN' || isSuperAdmin;
                 console.log('[CommunityPage] Admin status:', {
                     memberRole: userMember.role,

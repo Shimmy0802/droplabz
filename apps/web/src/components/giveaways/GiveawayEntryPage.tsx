@@ -84,13 +84,13 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
 
     // Auto-populate Discord ID from session if user logged in via Discord
     useEffect(() => {
-        if (session && (session as any).discordId) {
-            setDiscordUserId((session as any).discordId);
+        if (session && session.discordId) {
+            setDiscordUserId(session.discordId);
             setIsDiscordLinked(true);
 
             // Pre-verify Discord guild membership
             if (eventDetails?.community.guildId) {
-                verifyDiscordGuildMembership((session as any).discordId, eventDetails.community.guildId);
+                verifyDiscordGuildMembership(session.discordId, eventDetails.community.guildId);
             }
         }
     }, [session, eventDetails?.community.guildId]);
@@ -198,7 +198,7 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
                 isDiscordLinked,
                 guildId: eventDetails.community.guildId,
                 discordUserId,
-                sessionDiscordId: (session as any)?.discordId,
+                sessionDiscordId: session?.discordId,
             });
 
             if (needsDiscordRoles && isDiscordLinked && eventDetails.community.guildId) {

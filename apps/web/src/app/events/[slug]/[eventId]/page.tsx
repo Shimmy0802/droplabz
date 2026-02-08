@@ -99,8 +99,8 @@ export default function EventDetailPage() {
 
     // Auto-populate Discord ID from session if user logged in via Discord
     useEffect(() => {
-        if (session && (session as any).discordId) {
-            setDiscordUserId((session as any).discordId);
+        if (session && session.discordId) {
+            setDiscordUserId(session.discordId);
             setIsDiscordLinked(true);
         }
     }, [session]);

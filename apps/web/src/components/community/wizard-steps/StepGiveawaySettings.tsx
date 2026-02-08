@@ -175,7 +175,7 @@ export default function StepGiveawaySettings({ data, errors, onUpdate, clearErro
                                     key={option.id}
                                     type="button"
                                     onClick={() => {
-                                        onUpdate({ giveawayHolderRules: option.id as any });
+                                        onUpdate({ giveawayHolderRules: option.id as 'NONE' | 'ANY_HOLDER' | 'SPECIFIC_ROLE' });
                                         clearError('giveawayHolderRules');
                                     }}
                                     className={`rounded-lg border px-3 py-2 text-sm transition ${
