@@ -71,8 +71,6 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(presale, { status: 201 });
     } catch (error) {
-        console.error('[API Error] POST /api/presales:', error);
-
         if (error instanceof z.ZodError) {
             return NextResponse.json({ error: 'VALIDATION_ERROR', issues: error.issues }, { status: 400 });
         }

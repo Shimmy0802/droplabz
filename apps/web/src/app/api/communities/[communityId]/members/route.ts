@@ -43,8 +43,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
         });
         const { limit, offset, page, filter, search, userId, role } = parsed;
 
+        // Ensure limit is at least 1
+        const safeLimit = Math.max(limit, 1);
+
         // Calculate offset from page if provided
-        const actualOffset = page ? (page - 1) * limit : offset;
+        const actualOffset = page ? (page - 1) * safeLimit : offset;
 
         // Build where clause
         const where: any = {
@@ -97,7 +100,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
                 },
             },
             orderBy: { createdAt: 'desc' },
-            take: limit,
+            take: safeLimit,
             skip: actualOffset,
         });
 
@@ -109,10 +112,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
             data: members,
             pagination: {
                 total,
-                limit,
+                limit: safeLimit,
                 offset: actualOffset,
-                page: page || Math.floor(actualOffset / limit) + 1,
-                hasMore: actualOffset + limit < total,
+                page: page || Math.floor(actualOffset / safeLimit) + 1,
+                hasMore: actualOffset + safeLimit < total,
             },
         });
     } catch (error) {

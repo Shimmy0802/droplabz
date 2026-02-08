@@ -3,6 +3,7 @@ import { apiResponse, apiError, ApiError } from '@/lib/api-utils';
 import { requireCommunityAdmin } from '@/lib/auth/middleware';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { announceWinnersToDiscord } from '@/lib/discord/announce-winners';
 
 const pickWinnersSchema = z.object({
     entryIds: z.array(z.string().cuid()),
@@ -95,6 +96,28 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                 entry: true,
             },
         });
+
+        // Auto-announce winners to Discord if enabled
+        if (event.autoAnnounceWinners && event.community?.guildId && event.discordWinnerChannelId) {
+            try {
+                await announceWinnersToDiscord({
+                    eventId,
+                    eventTitle: event.title || 'Event',
+                    guildId: event.community.guildId,
+                    channelId: event.discordWinnerChannelId,
+                    winners: createdWinners.map(w => ({
+                        walletAddress: w.entry.walletAddress,
+                        discordUserId: w.entry.discordUserId || undefined,
+                    })),
+                    prize: event.prize || undefined,
+                    type: event.type,
+                    selectionMode: event.selectionMode,
+                });
+            } catch (error) {
+                console.error('[Manual Winners] Failed to announce winners:', error);
+                // Don't fail if announcement fails
+            }
+        }
 
         return apiResponse({ winners: createdWinners, count: winners.count }, 201);
     } catch (error) {

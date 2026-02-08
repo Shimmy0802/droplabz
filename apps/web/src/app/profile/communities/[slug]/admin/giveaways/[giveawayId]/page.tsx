@@ -86,6 +86,7 @@ export default function GiveawayDetailsPage() {
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [entryFilter, setEntryFilter] = useState<'all' | 'valid' | 'invalid' | 'ineligible'>('all');
     const [deleting, setDeleting] = useState(false);
+    const [drawingWinners, setDrawingWinners] = useState(false);
 
     // Load event data
     useEffect(() => {
@@ -204,6 +205,39 @@ export default function GiveawayDetailsPage() {
         } catch (error) {
             console.error('Error exporting:', error);
             alert('Failed to export entries');
+        }
+    };
+
+    // Handle draw winners
+    const handleDrawWinners = async () => {
+        if (!event) return;
+
+        const confirmed = confirm(
+            `Draw ${stats?.availableSpots || event.maxWinners} winner${(stats?.availableSpots || event.maxWinners) !== 1 ? 's' : ''}?\n\nThis will randomly select from eligible entries.`,
+        );
+        if (!confirmed) return;
+
+        try {
+            setDrawingWinners(true);
+            const res = await fetch(`/api/events/${giveawayId}/winners/draw`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ count: stats?.availableSpots || event.maxWinners }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                alert(`Successfully drew ${data.winnersCount} winner${data.winnersCount !== 1 ? 's' : ''}!`);
+                await loadEventData();
+            } else {
+                const error = await res.json();
+                alert(`Failed to draw winners: ${error.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error drawing winners:', error);
+            alert('An error occurred while drawing winners');
+        } finally {
+            setDrawingWinners(false);
         }
     };
 
@@ -672,17 +706,42 @@ export default function GiveawayDetailsPage() {
                                 Winner Management
                             </h2>
                             <p className="text-gray-400 mb-6">
-                                Winners are automatically selected when this event ends. No manual intervention
-                                required.
+                                {event.status === 'ACTIVE'
+                                    ? 'Close this giveaway to draw winners.'
+                                    : stats?.totalWinners === 0
+                                      ? 'No winners drawn yet. Click the button below to randomly select winners.'
+                                      : `${stats?.totalWinners} winner${stats?.totalWinners !== 1 ? 's' : ''} have been selected.`}
                             </p>
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4 flex-wrap">
                                 <div className="flex items-center gap-2 px-4 py-2 bg-[#00ff41]/10 border border-[#00ff41]/30 rounded-lg">
                                     <Trophy className="w-4 h-4 text-[#00ff41]" />
                                     <span className="text-sm font-semibold text-[#00ff41]">
-                                        {stats?.availableSpots || 0} spot{(stats?.availableSpots || 0) !== 1 ? 's' : ''}{' '}
-                                        remaining
+                                        {stats?.totalWinners || 0} / {event.maxWinners} selected
                                     </span>
                                 </div>
+
+                                {event.status === 'CLOSED' && (stats?.totalWinners || 0) < event.maxWinners && (
+                                    <button
+                                        onClick={handleDrawWinners}
+                                        disabled={drawingWinners || (stats?.availableSpots || 0) === 0}
+                                        className="px-4 py-2 bg-[#00ff41] text-[#0a0e27] rounded-lg font-semibold hover:bg-[#00dd33] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                    >
+                                        <Trophy className="w-4 h-4" />
+                                        {drawingWinners ? 'Drawing...' : 'Draw Winners'}
+                                    </button>
+                                )}
+
+                                {event.status === 'CLOSED' &&
+                                    (stats?.totalWinners || 0) > 0 &&
+                                    !event.autoAnnounceWinners && (
+                                        <button
+                                            className="px-4 py-2 bg-[#00d4ff]/10 border border-[#00d4ff]/30 text-[#00d4ff] rounded-lg font-semibold hover:bg-[#00d4ff]/20 transition-colors flex items-center gap-2"
+                                            onClick={() => setActiveTab('discord')}
+                                        >
+                                            <Send className="w-4 h-4" />
+                                            Announce Winners
+                                        </button>
+                                    )}
                             </div>
                         </div>
                     </div>

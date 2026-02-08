@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWalletState } from '@/lib/wallet';
+import { useSession } from 'next-auth/react';
 
 // Helper function to convert requirement types to friendly display names
 function getRequirementDisplayName(requirement: any): string {
@@ -52,6 +53,7 @@ interface Event {
         name: string;
         slug: string;
         icon: string | null;
+        guildId: string | null;
     };
     _count: {
         entries: number;
@@ -64,12 +66,15 @@ export default function EventDetailPage() {
     const eventId = params.eventId as string;
 
     const { publicKey, connected } = useWalletState();
+    const { data: session } = useSession();
     const [event, setEvent] = useState<Event | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [requirementsMet, setRequirementsMet] = useState<Record<string, boolean>>({});
+    const [discordUserId, setDiscordUserId] = useState<string | null>(null);
+    const [isDiscordLinked, setIsDiscordLinked] = useState(false);
 
     // Fetch event data
     useEffect(() => {
@@ -92,26 +97,89 @@ export default function EventDetailPage() {
         fetchEvent();
     }, [eventId]);
 
+    // Auto-populate Discord ID from session if user logged in via Discord
+    useEffect(() => {
+        if (session && (session as any).discordId) {
+            setDiscordUserId((session as any).discordId);
+            setIsDiscordLinked(true);
+        }
+    }, [session]);
+
     // Verify requirements when event or wallet state changes
     useEffect(() => {
         if (!event?.requirements) return;
 
-        const met: Record<string, boolean> = {};
+        const verifyRequirements = async () => {
+            const met: Record<string, boolean> = {};
 
-        for (const req of event.requirements) {
-            if (req.type === 'SOLANA_WALLET_CONNECTED') {
-                met[req.id] = connected && !!publicKey;
-            } else if (req.type === 'DISCORD_ROLE_REQUIRED') {
-                // Discord roles need server-side verification
-                met[req.id] = false; // Will be verified on submission
-            } else {
-                // Other requirements
-                met[req.id] = false; // Verified on submission
+            // Check if we need to verify Discord roles
+            const needsDiscordRoles = event.requirements.some(r => r.type === 'DISCORD_ROLE_REQUIRED');
+            let userRoles: string[] = [];
+            let roleNames: Record<string, string> = {};
+
+            console.log('[EventRequirements] Checking requirements:', {
+                hasEvent: !!event,
+                requirementCount: event.requirements.length,
+                needsDiscordRoles,
+                isDiscordLinked,
+                guildId: event.community.guildId,
+            });
+
+            if (needsDiscordRoles && isDiscordLinked && event.community.guildId) {
+                try {
+                    console.log('[EventRequirements] Fetching Discord roles for guildId:', event.community.guildId);
+                    const response = await fetch(`/api/discord/my-roles?guildId=${event.community.guildId}`);
+                    console.log('[EventRequirements] Discord API response status:', response.status);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        userRoles = data.roleIds || [];
+                        roleNames = data.roleNames || {};
+                        console.log('[EventRequirements] ✅ Successfully fetched Discord roles:', {
+                            discordUserId: data.discordUserId,
+                            roleIds: userRoles,
+                            roleNamesCount: Object.keys(roleNames).length,
+                            guildId: event.community.guildId,
+                        });
+                    }
+                } catch (err) {
+                    console.error('[EventRequirements] Error fetching Discord roles:', err);
+                }
             }
-        }
 
-        setRequirementsMet(met);
-    }, [event?.requirements, connected, publicKey]);
+            for (const req of event.requirements) {
+                if (req.type === 'SOLANA_WALLET_CONNECTED') {
+                    met[req.id] = connected && !!publicKey;
+                    console.log('[EventRequirements] Wallet requirement:', {
+                        isMet: met[req.id],
+                        connected,
+                        hasPublicKey: !!publicKey,
+                    });
+                } else if (req.type === 'DISCORD_ROLE_REQUIRED') {
+                    const requiredRoleIds = Array.isArray(req.config.roleIds)
+                        ? req.config.roleIds
+                        : [req.config.roleId];
+                    const hasRequiredRole = requiredRoleIds.some(roleId => userRoles.includes(roleId));
+                    met[req.id] = isDiscordLinked && hasRequiredRole;
+
+                    console.log('[EventRequirements] Discord Role Check:', {
+                        requiredRoleIds,
+                        userRoles,
+                        isDiscordLinked,
+                        hasRequiredRole,
+                        isMet: met[req.id],
+                    });
+                } else {
+                    // Other requirements verified on submission
+                    met[req.id] = false;
+                }
+            }
+
+            setRequirementsMet(met);
+        };
+
+        verifyRequirements();
+    }, [event?.requirements, connected, publicKey, isDiscordLinked, event?.community.guildId]);
 
     const handleSubmitEntry = async () => {
         if (!publicKey) {

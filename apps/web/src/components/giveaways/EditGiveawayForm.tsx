@@ -20,6 +20,8 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [requirements, setRequirements] = useState<Requirement[]>([]);
+    const [discordRoles, setDiscordRoles] = useState<Array<{ id: string; name: string; managed?: boolean }>>([]);
+    const [loadingRoles, setLoadingRoles] = useState(false);
 
     // Helper to convert UTC date to local date/time for display
     const getLocalDateTimeString = (isoString: string): { date: string; time: string } => {
@@ -47,7 +49,6 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
         winnerDiscordRoleId: '',
         endDate: '',
         endTime: '',
-        mentionRoleIds: [] as string[],
         customAnnouncementLine: '',
     });
 
@@ -76,11 +77,33 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
                 winnerDiscordRoleId: event.winnerDiscordRoleId || '',
                 endDate: localDate,
                 endTime: localTime,
-                mentionRoleIds: event.mentionRoleIds || [],
                 customAnnouncementLine: event.customAnnouncementLine || '',
             });
         }
     }, [event]);
+
+    useEffect(() => {
+        if (event?.community?.guildId) {
+            fetchDiscordRoles(event.community.guildId);
+        }
+    }, [event?.community?.guildId]);
+
+    const fetchDiscordRoles = async (guildId: string) => {
+        setLoadingRoles(true);
+        try {
+            const response = await fetch(`/api/discord/roles?guildId=${guildId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch Discord roles');
+            }
+            const data = await response.json();
+            setDiscordRoles(data.roles || []);
+        } catch (err) {
+            console.error('Error fetching Discord roles:', err);
+            setError('Failed to load Discord roles. Role ID must be entered manually.');
+        } finally {
+            setLoadingRoles(false);
+        }
+    };
 
     const handleAddRequirement = (type: string) => {
         const newReq: Requirement = {
@@ -90,7 +113,7 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
         };
 
         if (type === 'DISCORD_ROLE_REQUIRED') {
-            newReq.config = { roleId: '', roleName: '' };
+            newReq.config = { roleIds: [], roleNames: [] };
         } else if (type === 'DISCORD_ACCOUNT_AGE_DAYS') {
             newReq.config = { days: 0 };
         } else if (type === 'SOLANA_TOKEN_HOLDING') {
@@ -137,10 +160,12 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
                 throw new Error('Reserved spots cannot exceed max winners');
             }
 
-            // Validate Discord role requirements have roleId selected
+            // Validate Discord role requirements have roleId(s) selected
             const discordRoleReqs = requirements.filter(r => r.type === 'DISCORD_ROLE_REQUIRED');
             for (const req of discordRoleReqs) {
-                if (!req.config.roleId || req.config.roleId.trim() === '') {
+                const roleIds = Array.isArray(req.config.roleIds) ? req.config.roleIds.filter(Boolean) : [];
+                const roleId = typeof req.config.roleId === 'string' ? req.config.roleId.trim() : '';
+                if (roleIds.length === 0 && !roleId) {
                     throw new Error('Discord role requirement must have a role selected');
                 }
             }
@@ -149,6 +174,18 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
             const [endYear, endMonth, endDay] = formData.endDate.split('-').map(Number);
             const [endHours, endMinutes] = formData.endTime.split(':').map(Number);
             const endDateTime = new Date(endYear, endMonth - 1, endDay, endHours, endMinutes, 0);
+
+            const mentionRoleIds = Array.from(
+                new Set(
+                    requirements
+                        .filter(r => r.type === 'DISCORD_ROLE_REQUIRED')
+                        .flatMap(r => {
+                            const roleIds = Array.isArray(r.config.roleIds) ? r.config.roleIds : [];
+                            const roleId = r.config.roleId ? [r.config.roleId] : [];
+                            return [...roleId, ...roleIds].filter(Boolean);
+                        }),
+                ),
+            );
 
             type EventUpdateData = {
                 title: string;
@@ -175,7 +212,7 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
                 autoAssignDiscordRole: formData.autoAssignDiscordRole,
                 winnerDiscordRoleId: formData.winnerDiscordRoleId || undefined,
                 endAt: endDateTime.toISOString(),
-                mentionRoleIds: formData.mentionRoleIds,
+                mentionRoleIds,
                 customAnnouncementLine: formData.customAnnouncementLine || undefined,
             };
 
@@ -359,42 +396,7 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
                     Customize how this event will be announced in your Discord server
                 </p>
 
-                {/* Mention Roles */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-3">
-                        Role(s) to Mention (Optional)
-                    </label>
-                    <p className="text-xs text-gray-400 mb-3">
-                        Select which Discord roles to tag when announcing this event
-                    </p>
-                    <p className="text-sm text-gray-400 mb-3">
-                        (Discord role selection coming soon - enter role IDs manually for now)
-                    </p>
-                    {formData.mentionRoleIds.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                            {formData.mentionRoleIds.map(roleId => (
-                                <div
-                                    key={roleId}
-                                    className="inline-flex items-center gap-2 px-3 py-1 bg-[#00d4ff]/20 text-[#00d4ff] rounded-full text-sm"
-                                >
-                                    <span>@{roleId}</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setFormData({
-                                                ...formData,
-                                                mentionRoleIds: formData.mentionRoleIds.filter(id => id !== roleId),
-                                            });
-                                        }}
-                                        className="hover:text-[#00ff41]"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                <div className="text-sm text-gray-400">Role mentions are based on your Discord role requirements.</div>
 
                 {/* Custom Announcement Line */}
                 <div>
@@ -468,14 +470,78 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
 
                             {req.type === 'DISCORD_ROLE_REQUIRED' && (
                                 <div>
-                                    <label className="text-xs text-gray-400">Discord Role ID</label>
-                                    <input
-                                        type="text"
-                                        value={req.config.roleId || ''}
-                                        onChange={e => handleRequirementChange(req.id, 'roleId', e.target.value)}
-                                        placeholder="Enter Discord role ID"
-                                        className="w-full mt-1 px-3 py-1 bg-[#111528] border border-[#00d4ff]/20 rounded text-white text-sm focus:border-[#00ff41] focus:outline-none"
-                                    />
+                                    <label className="text-xs text-gray-400">Discord Roles Required</label>
+                                    {event?.community?.guildId && discordRoles.length > 0 ? (
+                                        <div className="mt-2 space-y-2 max-h-56 overflow-y-auto border border-[#00d4ff]/10 rounded-md p-3">
+                                            {discordRoles.map(role => {
+                                                const selectedRoleIds = Array.isArray(req.config.roleIds)
+                                                    ? req.config.roleIds
+                                                    : req.config.roleId
+                                                      ? [req.config.roleId]
+                                                      : [];
+                                                const checked = selectedRoleIds.includes(role.id);
+                                                return (
+                                                    <label key={role.id} className="flex items-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={checked}
+                                                            onChange={e => {
+                                                                const nextRoleIds = e.target.checked
+                                                                    ? [...selectedRoleIds, role.id]
+                                                                    : selectedRoleIds.filter(id => id !== role.id);
+                                                                const roleNames = discordRoles
+                                                                    .filter(r => nextRoleIds.includes(r.id))
+                                                                    .map(r => r.name);
+                                                                setRequirements(prev =>
+                                                                    prev.map(r =>
+                                                                        r.id === req.id
+                                                                            ? {
+                                                                                  ...r,
+                                                                                  config: {
+                                                                                      ...r.config,
+                                                                                      roleIds: nextRoleIds,
+                                                                                      roleNames,
+                                                                                  },
+                                                                              }
+                                                                            : r,
+                                                                    ),
+                                                                );
+                                                            }}
+                                                            className="w-4 h-4 rounded border-[#00d4ff]/30 text-[#00ff41] cursor-pointer"
+                                                        />
+                                                        <span className="ml-3 text-sm text-gray-300">
+                                                            {role.name} {role.managed ? '(Managed)' : ''}
+                                                        </span>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <input
+                                                type="text"
+                                                value={
+                                                    Array.isArray(req.config.roleIds)
+                                                        ? req.config.roleIds.join(',')
+                                                        : req.config.roleId || ''
+                                                }
+                                                onChange={e => {
+                                                    const roleIds = e.target.value
+                                                        .split(',')
+                                                        .map(id => id.trim())
+                                                        .filter(Boolean);
+                                                    handleRequirementChange(req.id, 'roleIds', roleIds);
+                                                }}
+                                                placeholder="Enter Discord role IDs (comma-separated)"
+                                                className="w-full mt-1 px-3 py-1 bg-[#111528] border border-[#00d4ff]/20 rounded text-white text-sm focus:border-[#00ff41] focus:outline-none"
+                                            />
+                                            {!event?.community?.guildId && (
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Connect Discord server in Community Settings to select from a list
+                                                </p>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
                             )}
 

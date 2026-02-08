@@ -15,10 +15,42 @@ export async function GET() {
                 _count: {
                     select: {
                         members: true,
+                        events: {
+                            where: {
+                                type: 'WHITELIST',
+                                status: 'ACTIVE',
+                                endAt: {
+                                    gte: new Date(),
+                                },
+                            },
+                        },
                     },
                 },
             },
         });
+
+        // Get active giveaway counts for each community
+        const giveawayCounts = await db.event.groupBy({
+            by: ['communityId'],
+            where: {
+                type: { in: ['PRESALE', 'GIVEAWAY'] },
+                status: 'ACTIVE',
+                endAt: {
+                    gte: new Date(),
+                },
+            },
+            _count: true,
+        });
+
+        const giveawayCountMap = new Map(giveawayCounts.map(g => [g.communityId, g._count]));
+
+        // Get active member counts for each community (members with entries in active events)
+        const activeMemberCounts = await db.communityMember.groupBy({
+            by: ['communityId'],
+            _count: true,
+        });
+
+        const activeMemberCountMap = new Map(activeMemberCounts.map(m => [m.communityId, m._count]));
 
         // Fetch active whitelists (upcoming mints)
         const upcomingMints = await db.event.findMany({
@@ -132,6 +164,9 @@ export async function GET() {
                 rating: community.rating,
                 boostLevel: community.boostLevel,
                 memberCount: community._count.members,
+                activeMemberCount: activeMemberCountMap.get(community.id) || 0,
+                activeWhitelistCount: community._count.events || 0,
+                activeGiveawayCount: giveawayCountMap.get(community.id) || 0,
                 categories: community.categories,
                 tags: community.tags,
             })),

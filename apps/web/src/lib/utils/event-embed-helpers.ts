@@ -436,11 +436,11 @@ export function buildProfessionalEventEmbed(
             ? `${event.description}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
             : '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
         fields,
-        image: imageUrl ? { url: imageUrl } : null,
+        ...(imageUrl && { image: { url: imageUrl } }),
         footer: {
             text: `✨ DropLabz • Managed event • ${event.id.slice(0, 8)}`,
         },
-        timestamp: new Date().toISOString(),
+        timestamp: true,
     };
 
     return embed;
@@ -467,7 +467,7 @@ export function buildPresaleEventEmbed(
         color: 0x00d4ff,
         title: `💰 **${event.title}**`,
         description: `${event.description || 'Exclusive presale opportunity!'}\n\n━━━━━━━━━━━━━━━━━━`,
-        image: event.imageUrl ? { url: event.imageUrl } : null,
+        ...(event.imageUrl && { image: { url: event.imageUrl } }),
         fields: [
             {
                 name: '💎 PRESALE DETAILS',
@@ -508,7 +508,7 @@ export function buildPresaleEventEmbed(
         footer: {
             text: '✨ DropLabz Presales',
         },
-        timestamp: new Date().toISOString(),
+        timestamp: true,
     };
 
     return embed;
@@ -579,13 +579,90 @@ export function buildCollaborationEventEmbed(
     const embed: DiscordEmbed = {
         color: 0xffd700,
         title: `🤝 **${event.title}**`,
-        description: `${event.description || 'Join this collaboration event!'}\n\n━━━━━━━━━━━━━━━━━━`,
-        image: event.imageUrl ? { url: event.imageUrl } : null,
+        description: `${event.description || 'Join this collaboration'}\n\n━━━━━━━━━━━━━━━━━━`,
+        ...(event.imageUrl && { image: { url: event.imageUrl } }),
         fields,
         footer: {
             text: '✨ DropLabz Collaborations',
         },
-        timestamp: new Date().toISOString(),
+        timestamp: true,
+    };
+
+    return embed;
+}
+
+/**
+ * Build winner announcement embed for Discord
+ * Shows celebration message with winner details
+ */
+export function buildWinnerAnnouncementEmbed(eventData: {
+    title: string;
+    prize?: string;
+    type?: string;
+    winners: Array<{
+        walletAddress: string;
+        discordUserId?: string;
+    }>;
+    selectionMode?: string;
+}): DiscordEmbed {
+    const { title, prize, type = 'GIVEAWAY', winners, selectionMode = 'RANDOM' } = eventData;
+
+    // Build winner list with Discord mentions if available
+    const winnerList = winners
+        .map(w => {
+            if (w.discordUserId) {
+                return `<@${w.discordUserId}> (\`${w.walletAddress.slice(0, 8)}...\`)`;
+            }
+            return `\`${w.walletAddress.slice(0, 12)}...\``;
+        })
+        .join('\n');
+
+    // Determine emoji based on event type
+    const typeEmoji = type === 'GIVEAWAY' ? '🎁' : type === 'WHITELIST' ? '📋' : type === 'PRESALE' ? '💰' : '⭐';
+
+    // Build fields
+    const fields: Array<{
+        name: string;
+        value: string;
+        inline?: boolean;
+    }> = [
+        {
+            name: '🏆 Event',
+            value: title,
+            inline: false,
+        },
+        {
+            name: '🎯 Winners',
+            value: winnerList || 'No winners selected',
+            inline: false,
+        },
+    ];
+
+    // Add prize if present
+    if (prize) {
+        fields.push({
+            name: '🎖️ Prize',
+            value: prize,
+            inline: true,
+        });
+    }
+
+    // Add selection mode
+    fields.push({
+        name: '⚙️ Method',
+        value: selectionMode === 'RANDOM' ? '🎲 Random Draw' : '📌 Manual Selection',
+        inline: true,
+    });
+
+    const embed: DiscordEmbed = {
+        color: 0x00ff41, // Radioactive green - success/celebration
+        title: `${typeEmoji} **${title} - Winners Announced!**`,
+        description: `🎉 Congratulations to our ${type.toLowerCase()} winners!\n\n━━━━━━━━━━━━━━━━━━`,
+        fields,
+        footer: {
+            text: '✨ DropLabz Winner Announcement',
+        },
+        timestamp: true,
     };
 
     return embed;

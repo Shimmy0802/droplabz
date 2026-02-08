@@ -3,6 +3,7 @@ import { apiResponse, apiError, ApiError } from '@/lib/api-utils';
 import { requireCommunityAdmin } from '@/lib/auth/middleware';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { announceWinnersToDiscord } from '@/lib/discord/announce-winners';
 
 const drawWinnersSchema = z.object({
     count: z.number().int().min(1).optional(),
@@ -32,6 +33,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             },
         });
 
+        // Fetch full event with community details for announcement
+        const eventForAnnouncement = await db.event.findUnique({
+            where: { id: eventId },
+            include: {
+                community: {
+                    select: {
+                        guildId: true,
+                    },
+                },
+            },
+        });
+
         if (!event) {
             throw new ApiError('EVENT_NOT_FOUND', 404, 'Event not found');
         }
@@ -54,7 +67,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         });
 
         // Calculate available spots
-        const availableSpots = event.maxWinners - (event.reservedSpots || 0) - existingWinners;
+        const maxWinners = event.maxWinners || 1;
+        const reservedSpots = event.reservedSpots || 0;
+        const availableSpots = maxWinners - reservedSpots - existingWinners;
 
         if (availableSpots <= 0) {
             throw new ApiError('NO_SPOTS_AVAILABLE', 400, 'No winner spots available');
@@ -120,6 +135,32 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                 },
             },
         });
+
+        // Auto-announce winners to Discord if enabled
+        if (
+            eventForAnnouncement?.autoAnnounceWinners &&
+            eventForAnnouncement.community?.guildId &&
+            eventForAnnouncement.discordWinnerChannelId
+        ) {
+            try {
+                await announceWinnersToDiscord({
+                    eventId,
+                    eventTitle: eventForAnnouncement.title || 'Event',
+                    guildId: eventForAnnouncement.community.guildId,
+                    channelId: eventForAnnouncement.discordWinnerChannelId,
+                    winners: createdWinners.map(w => ({
+                        walletAddress: w.entry.walletAddress,
+                        discordUserId: w.entry.discordUserId || undefined,
+                    })),
+                    prize: eventForAnnouncement.prize || undefined,
+                    type: eventForAnnouncement.type,
+                    selectionMode: eventForAnnouncement.selectionMode,
+                });
+            } catch (error) {
+                console.error('[Draw Winners] Failed to announce winners:', error);
+                // Don't fail the draw if announcement fails, just log it
+            }
+        }
 
         return apiResponse(
             {

@@ -35,16 +35,31 @@ export function createVerificationMessage(walletAddress: string, nonce: string):
  * @param publicKey Wallet public key that allegedly signed
  * @returns boolean indicating if signature is valid
  */
-export async function verifySignedMessage(message: string, _signature: string, publicKey: PublicKey): Promise<boolean> {
+export async function verifySignedMessage(
+    message: string,
+    signature: string,
+    publicKey: PublicKey,
+): Promise<boolean> {
     try {
-        // NOTE: Actual signature verification requires nacl or crypto
-        // This is a placeholder - implement proper verification
-        // See: https://github.com/solana-labs/solana/blob/master/web3.js/packages/library/src/utils/verify-signature.ts
+        // Use nacl to verify the signature
+        const messageBytes = Buffer.from(message, 'utf-8');
+        let signatureBytes: Uint8Array;
 
-        console.log('Verifying signature for:', publicKey.toBase58(), 'Message:', message);
+        try {
+            // Try base64 first
+            signatureBytes = Buffer.from(signature, 'base64');
+        } catch {
+            try {
+                // Fall back to Buffer from string if base64 fails
+                signatureBytes = Buffer.from(signature);
+            } catch {
+                return false;
+            }
+        }
 
-        // TODO: Implement actual signature verification
-        return true;
+        // Verify using nacl's detached signature verification
+        const nacl = require('tweetnacl');
+        return nacl.sign.detached.verify(messageBytes, signatureBytes, publicKey.toBuffer());
     } catch (error) {
         console.error('Signature verification error:', error);
         return false;

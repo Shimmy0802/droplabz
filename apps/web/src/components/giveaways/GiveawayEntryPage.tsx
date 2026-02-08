@@ -191,17 +191,93 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
             let userRoles: string[] = [];
             let roleNames: Record<string, string> = {};
 
+            console.log('[GiveawayEntry] Requirements Check Starting:', {
+                hasEventDetails: !!eventDetails,
+                requirementCount: eventDetails.requirements.length,
+                needsDiscordRoles,
+                isDiscordLinked,
+                guildId: eventDetails.community.guildId,
+                discordUserId,
+                sessionDiscordId: (session as any)?.discordId,
+            });
+
             if (needsDiscordRoles && isDiscordLinked && eventDetails.community.guildId) {
                 try {
-                    const response = await fetch(`/api/discord/my-roles?guildId=${eventDetails.community.guildId}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        userRoles = data.roleIds || [];
+                    const guildId = eventDetails.community.guildId;
+                    const fetchUrl = `/api/discord/my-roles?guildId=${guildId}`;
+
+                    console.log('[GiveawayRequirements] About to fetch Discord roles:', {
+                        guildId,
+                        fetchUrl,
+                        isDiscordLinked,
+                        needsDiscordRoles,
+                        communityHasGuildId: !!eventDetails.community.guildId,
+                    });
+
+                    const response = await fetch(fetchUrl);
+                    const data = await response.json();
+
+                    console.log('[GiveawayRequirements] /api/discord/my-roles response:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        success: data.success,
+                        error: data.error,
+                        apiError: data.apiError,
+                        roleIds: data.roleIds,
+                        hasRoles: data.roleIds && data.roleIds.length > 0,
+                        isMember: data.isMember,
+                        discordUserId: data.discordUserId,
+                        fullResponse: data,
+                    });
+
+                    // Handle both success and error responses consistently
+                    if (response.ok && data.success && data.roleIds && data.roleIds.length > 0) {
+                        userRoles = data.roleIds;
                         roleNames = data.roleNames || {};
+                        console.log('[GiveawayRequirements] ✅ Successfully fetched Discord roles:', {
+                            discordUserId: data.discordUserId,
+                            roleIds: userRoles,
+                            roleNamesCount: Object.keys(roleNames).length,
+                            guildId,
+                        });
+                    } else {
+                        console.warn('⚠️ [GiveawayRequirements] Discord roles fetch failed or empty:', {
+                            status: response.status,
+                            statusText: response.statusText,
+                            success: data.success,
+                            error: data.error,
+                            apiError: data.apiError,
+                            roleIds: data.roleIds,
+                            isMember: data.isMember,
+                            reason: !response.ok
+                                ? `HTTP ${response.status}`
+                                : !data.success
+                                  ? `success=false`
+                                  : !data.roleIds
+                                    ? 'no roleIds'
+                                    : data.roleIds.length === 0
+                                      ? 'empty roleIds array'
+                                      : 'unknown',
+                        });
+                        userRoles = [];
+                        roleNames = {};
                     }
                 } catch (err) {
-                    console.error('Error fetching Discord roles:', err);
+                    console.error('[GiveawayRequirements] Error fetching Discord roles:', err);
+                    userRoles = [];
+                    roleNames = {};
                 }
+            } else {
+                console.warn('[GiveawayRequirements] Skipping Discord role fetch because:', {
+                    needsDiscordRoles,
+                    isDiscordLinked,
+                    hasGuildId: !!eventDetails.community.guildId,
+                    reason: !needsDiscordRoles
+                        ? 'No DISCORD_ROLE_REQUIRED requirements'
+                        : !isDiscordLinked
+                          ? 'Discord not linked'
+                          : 'No guildId on community',
+                });
             }
 
             for (const req of eventDetails.requirements) {
@@ -228,14 +304,56 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
 
                 // Check DISCORD_ROLE_REQUIRED
                 else if (req.type === 'DISCORD_ROLE_REQUIRED') {
-                    const requiredRoleId = req.config.roleId;
-                    const roleName = req.config.roleName || roleNames[requiredRoleId] || 'Required Role';
+                    // Debug: Log the raw requirement config
+                    console.log('[GiveawayEntry] Discord Role Requirement:', {
+                        requirementId: req.id,
+                        rawConfig: req.config,
+                        configKeys: Object.keys(req.config),
+                    });
 
-                    status.isMet = isDiscordLinked && userRoles.includes(requiredRoleId);
-                    status.message = `Have "${roleName}" role in Discord`;
+                    // Handle both old format (roleId) and new format (roleIds array)
+                    const requiredRoleIds = req.config.roleIds || (req.config.roleId ? [req.config.roleId] : []);
+
+                    console.log('[GiveawayEntry] Parsed roleIds:', {
+                        requiredRoleIds,
+                        userRoles,
+                        isDiscordLinked,
+                    });
+
+                    // Get role names (prioritize array, fall back to single roleNames object)
+                    let displayRoleNames: string[] = [];
+                    if (req.config.roleNames && typeof req.config.roleNames === 'object') {
+                        if (Array.isArray(req.config.roleNames)) {
+                            displayRoleNames = req.config.roleNames;
+                        } else {
+                            // Legacy: roleNames is an object keyed by roleId
+                            displayRoleNames = requiredRoleIds.map(
+                                id => req.config.roleNames[id] || roleNames[id] || id,
+                            );
+                        }
+                    } else {
+                        displayRoleNames = requiredRoleIds.map(id => roleNames[id] || 'Role');
+                    }
+
+                    // Check if user has ANY of the required roles
+                    const hasRequiredRole = requiredRoleIds.some(roleId => userRoles.includes(roleId));
+                    status.isMet = isDiscordLinked && hasRequiredRole;
+
+                    // Debug logging
+                    console.log('[GiveawayRequirements] Discord Role Check:', {
+                        requiredRoleIds,
+                        userRoles,
+                        isDiscordLinked,
+                        hasRequiredRole,
+                        isMet: status.isMet,
+                        roleNames: req.config.roleNames,
+                    });
+
+                    const roleDisplay = displayRoleNames.length > 0 ? displayRoleNames.join(', ') : 'Required Role';
+                    status.message = `Have "${roleDisplay}" role in Discord`;
 
                     if (!isDiscordLinked) {
-                        status.message = `Link Discord to verify "${roleName}" role`;
+                        status.message = `Link Discord to verify "${roleDisplay}" role`;
                     }
                 }
 
@@ -361,7 +479,7 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
         );
     }
 
-    const allRequirementsMet = requirementStatuses.every(r => r.isMet || r.type.includes('DISCORD'));
+    const allRequirementsMet = requirementStatuses.every(r => r.isMet);
 
     return (
         <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-8">

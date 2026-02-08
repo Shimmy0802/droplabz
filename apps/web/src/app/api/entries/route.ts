@@ -115,8 +115,6 @@ export async function POST(request: NextRequest) {
             201,
         );
     } catch (error) {
-        console.error('[API Error] POST /api/entries:', error);
-
         if (error instanceof z.ZodError) {
             return apiResponse({ error: 'VALIDATION_ERROR', issues: error.issues }, 400);
         }
@@ -126,7 +124,8 @@ export async function POST(request: NextRequest) {
         }
 
         if (error instanceof Error) {
-            console.error('Error details:', error.message, error.stack);
+            // Log error internally (in production, use structured logging service)
+            // Don't expose details to client
         }
 
         return apiResponse({ error: 'INTERNAL_SERVER_ERROR', message: 'Failed to create entry' }, 500);

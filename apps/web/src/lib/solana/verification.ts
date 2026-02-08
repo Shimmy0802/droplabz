@@ -40,14 +40,18 @@ export async function verifyWalletSignature(
 
 /**
  * Verifies wallet ownership by checking signature.
- * This is a placeholder - implement actual verification logic.
+ * Requires a valid signature from the wallet's private key.
  */
-export async function verifyWalletOwnership(walletAddress: string, _signature?: string): Promise<boolean> {
-    // TODO: Implement actual signature verification
-    // For MVP, accept any valid wallet address
+export async function verifyWalletOwnership(
+    walletAddress: string,
+    message: string,
+    signatureBase58: string,
+): Promise<boolean> {
     try {
-        validateSolanaAddress(walletAddress);
-        return true;
+        const publicKey = validateSolanaAddress(walletAddress);
+        // Use the verifyWalletSignature function which properly implements NaCl verification
+        const isValid = await verifyWalletSignature(publicKey, message, signatureBase58);
+        return isValid;
     } catch {
         return false;
     }

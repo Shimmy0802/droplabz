@@ -19,7 +19,8 @@ const getRolesSchema = z.object({
 export async function GET(req: NextRequest) {
     try {
         // Authenticate user
-        const user = await requireAuth();
+        const session = await requireAuth();
+        const userId = session.user.id;
 
         // Get query parameters
         const searchParams = req.nextUrl.searchParams;
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
 
         // Get user's Discord ID and access token
         const dbUser = await db.user.findUnique({
-            where: { id: user.id },
+            where: { id: userId },
             select: { discordId: true, discordAccessToken: true },
         });
 
@@ -46,7 +47,11 @@ export async function GET(req: NextRequest) {
         // Fetch guild member info using bot token
         const memberUrl = `https://discord.com/api/v10/guilds/${validatedGuildId}/members/${dbUser.discordId}`;
 
-        console.log(`[Discord Roles] Getting roles for user ${dbUser.discordId} in guild ${validatedGuildId}`);
+        console.log(`[Discord Roles] Fetching member info from Discord API`, {
+            memberUrl,
+            guildId: validatedGuildId,
+            discordUserId: dbUser.discordId,
+        });
 
         const response = await fetch(memberUrl, {
             method: 'GET',
@@ -56,24 +61,51 @@ export async function GET(req: NextRequest) {
             },
         });
 
+        console.log(`[Discord Roles] Discord API response status: ${response.status} ${response.statusText}`);
+
         if (!response.ok) {
             if (response.status === 404) {
+                console.warn(`[Discord Roles] User ${dbUser.discordId} is not a member of guild ${validatedGuildId}`);
                 return NextResponse.json(
                     {
                         error: 'You are not a member of this Discord server',
                         isMember: false,
-                        roles: [],
+                        roleIds: [],
+                        roleNames: {},
+                        success: false,
                     },
                     { status: 404 },
                 );
             }
 
-            console.error(`[Discord Roles] API error: ${response.status}`);
-            return NextResponse.json({ error: 'Unable to fetch Discord roles' }, { status: response.status });
+            const errorText = await response.text().catch(() => 'No error details');
+            console.error(`[Discord Roles] API error: ${response.status} ${response.statusText}`, {
+                error: errorText,
+                guildId: validatedGuildId,
+                discordUserId: dbUser.discordId,
+            });
+            return NextResponse.json(
+                {
+                    error: 'Unable to fetch Discord roles',
+                    success: false,
+                    roleIds: [],
+                    roleNames: {},
+                    apiError: `${response.status} ${response.statusText}`,
+                },
+                { status: response.status },
+            );
         }
 
         const member = await response.json();
         const userRoles = member.roles || [];
+
+        console.log(`[Discord Roles] Member info retrieved:`, {
+            discordUserId: dbUser.discordId,
+            guildId: validatedGuildId,
+            roleCount: userRoles.length,
+            roleIds: userRoles,
+            username: member.user?.username,
+        });
 
         // Optionally fetch role names
         const roleNames: Record<string, string> = {};
@@ -115,10 +147,27 @@ export async function GET(req: NextRequest) {
         });
     } catch (error) {
         if (error instanceof z.ZodError) {
-            return NextResponse.json({ error: 'Invalid parameters', issues: error.issues }, { status: 400 });
+            return NextResponse.json(
+                {
+                    error: 'Invalid parameters',
+                    issues: error.issues,
+                    success: false,
+                    roleIds: [],
+                    roleNames: {},
+                },
+                { status: 400 },
+            );
         }
 
         console.error('[Discord Roles] Error:', error);
-        return NextResponse.json({ error: 'Failed to fetch Discord roles' }, { status: 500 });
+        return NextResponse.json(
+            {
+                error: 'Failed to fetch Discord roles',
+                success: false,
+                roleIds: [],
+                roleNames: {},
+            },
+            { status: 500 },
+        );
     }
 }

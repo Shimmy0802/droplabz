@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireCommunityAdmin } from '@/lib/auth/middleware';
 import { ApiError } from '@/lib/api-utils';
+import { validateSolanaAddress } from '@/lib/solana/verification';
+import { verifyDiscordRequirements, verifySolanaRequirements } from '@/lib/verification/entry-verifier';
 import { z } from 'zod';
 
 const createPresaleEntrySchema = z.object({
@@ -25,13 +27,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pre
             })
             .parse(body);
 
-        // Get presale with tiers
+        // Get presale with tiers and community info
         const presale = await db.presale.findUnique({
             where: { id: presaleId },
             include: {
                 tiers: {
                     include: {
                         requirements: true,
+                    },
+                },
+                community: {
+                    select: {
+                        guildId: true,
                     },
                 },
             },
@@ -57,7 +64,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pre
             return NextResponse.json({ error: 'Already entered this presale' }, { status: 400 });
         }
 
-        // Find which tier user qualifies for (iterate in order, assign to first match with available spots)
+        // Find which tier user qualifies for (check requirements for each tier)
         let assignedTier = null;
 
         for (const tier of presale.tiers) {
@@ -66,15 +73,27 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pre
                 continue;
             }
 
-            // For now, assign to first tier with available spots
-            // TODO: Implement actual requirement verification against Discord/Solana
-            assignedTier = tier;
-            break;
+            // Verify tier requirements
+            const discordResult = await verifyDiscordRequirements(
+                discordUserId,
+                presale.community?.guildId,
+                tier.requirements,
+            );
+
+            const solanaResult = await verifySolanaRequirements(walletAddress, tier.requirements);
+
+            // User qualifies if both Discord and Solana requirements pass
+            if (discordResult.isValid && solanaResult.isValid) {
+                assignedTier = tier;
+                break;
+            }
         }
 
         if (!assignedTier) {
             return NextResponse.json(
-                { error: 'No tiers available (all full or no tiers configured)' },
+                {
+                    error: 'Do not meet requirements for any available tier',
+                },
                 { status: 400 },
             );
         }

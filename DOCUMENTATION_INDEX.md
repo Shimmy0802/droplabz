@@ -33,7 +33,13 @@ Welcome to the DropLabz documentation. This index guides you to the right resour
 
 ```
 /docs/
-└── guides/                # How-to guides and setup tutorials
+├── guides/                # How-to guides and setup tutorials
+│   └── WALLET_INTEGRATION.md
+└── archived/              # Completed work, investigations, outdated deployments
+    ├── PHASE_*.md         # Phase-specific work summaries
+    ├── DISCORD_*.md       # Discord setup investigations (all resolved)
+    ├── VERCEL_*.md        # Deployment fix history
+    └── ... and 30+ other completed work files
 ```
 
 ---
@@ -70,7 +76,6 @@ pnpm db:studio        # Open Prisma Studio
 - **Database schema**: See apps/web/prisma/schema.prisma
 - **Auth middleware**: See apps/web/src/lib/auth/middleware.ts
 - **Solana integration**: See docs/guides/WALLET_INTEGRATION.md
-- **Advanced admin features**: See COMPLETED_WORK_SUMMARY.md
 
 ### **Design References**
 
@@ -150,5 +155,18 @@ Documentation is maintained as code. To update:
 
 ---
 
-**Last Updated**: January 29, 2026  
+## 📦 Archived Documentation
+
+Completed work, phase summaries, and resolved investigations are stored in [`/docs/archived/`](./docs/archived/) including:
+
+- **Deployment fixes** — VERCEL_*.md, REGISTRY_*.md (reference only; production is live)
+- **Phase summaries** — PHASE_*.md (completed work summaries)
+- **Discord setup investigations** — DISCORD_WIZARD_*.md, DISCORD_BOT_*.md (all resolved; code is live)
+- **Other completed work** — Event time fixes, winner announcements, embed builders, etc.
+
+**These are for reference only.** Active development focuses on the core documentation in the root and `/docs/guides/`.
+
+---
+
+**Last Updated**: February 8, 2026  
 **Status**: Active - Core documentation consolidated and organized

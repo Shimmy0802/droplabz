@@ -20,9 +20,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 export async function POST(req: NextRequest) {
     try {
         // Require authentication
-        console.log('Upload request received, checking authentication...');
         await requireAuth();
-        console.log('Authentication successful');
 
         // Check if Cloudinary is configured
         if (
@@ -35,7 +33,6 @@ export async function POST(req: NextRequest) {
             if (!process.env.CLOUDINARY_API_KEY) missing.push('CLOUDINARY_API_KEY');
             if (!process.env.CLOUDINARY_API_SECRET) missing.push('CLOUDINARY_API_SECRET');
 
-            console.error('Missing Cloudinary environment variables:', missing.join(', '));
             return NextResponse.json(
                 {
                     error: 'Image upload not configured. Missing environment variables.',
@@ -47,7 +44,6 @@ export async function POST(req: NextRequest) {
 
         const formData = await req.formData();
         const file = formData.get('file') as File;
-        console.log('File received:', file ? `${file.name} (${file.size} bytes, ${file.type})` : 'null');
 
         if (!file) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -67,24 +63,16 @@ export async function POST(req: NextRequest) {
         }
 
         // Convert File to base64 for Cloudinary upload
-        console.log('Converting file to base64...');
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
         const base64 = buffer.toString('base64');
         const dataUri = `data:${file.type};base64,${base64}`;
-        console.log('Base64 conversion complete, data URI length:', dataUri.length);
 
         // Upload to Cloudinary
-        console.log('Uploading to Cloudinary with config:', {
-            cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-            has_api_key: !!process.env.CLOUDINARY_API_KEY,
-            has_api_secret: !!process.env.CLOUDINARY_API_SECRET,
-        });
         const result = await cloudinary.uploader.upload(dataUri, {
             folder: 'droplabz',
             resource_type: 'image',
         });
-        console.log('Cloudinary upload successful:', result.secure_url);
 
         return NextResponse.json({
             url: result.secure_url,
@@ -93,14 +81,8 @@ export async function POST(req: NextRequest) {
             type: file.type,
         });
     } catch (error) {
-        console.error('Error uploading file:', error);
-
-        // Detailed error logging for debugging
-        if (error instanceof Error) {
-            console.error('Error name:', error.name);
-            console.error('Error message:', error.message);
-            console.error('Error stack:', error.stack);
-        }
+        // Log error internally (in production, use structured logging service)
+        // Don't expose internal details to client
 
         return NextResponse.json(
             {

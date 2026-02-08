@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { apiResponse, apiError, ApiError } from '@/lib/api-utils';
 import { requireCommunityMember, requireCommunityAdmin } from '@/lib/auth/middleware';
 import { resolveMissingRoleNames } from '@/lib/discord/role-resolver';
+import { announceWinnersToDiscord } from '@/lib/discord/announce-winners';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
@@ -38,6 +39,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
                         name: true,
                         slug: true,
                         icon: true,
+                        guildId: true,
                         socials: true,
                     },
                 },
@@ -173,6 +175,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             throw new ApiError('INVALID_RESERVED_SPOTS', 400, 'Reserved spots cannot exceed max winners');
         }
 
+        const isClosingEvent = updates.status === 'CLOSED' && event.status !== 'CLOSED';
+
         // Update event
         const updatedEvent = await db.event.update({
             where: { id: eventId },
@@ -190,6 +194,58 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                 },
             },
         });
+
+        // Auto-announce winners to Discord on close (especially FCFS)
+        if (isClosingEvent) {
+            try {
+                const eventForAnnouncement = await db.event.findUnique({
+                    where: { id: eventId },
+                    include: {
+                        community: {
+                            select: {
+                                guildId: true,
+                            },
+                        },
+                        winners: {
+                            include: {
+                                entry: {
+                                    select: {
+                                        walletAddress: true,
+                                        discordUserId: true,
+                                    },
+                                },
+                            },
+                            take: 20,
+                            orderBy: { pickedAt: 'desc' },
+                        },
+                    },
+                });
+
+                if (
+                    eventForAnnouncement?.autoAnnounceWinners &&
+                    eventForAnnouncement.community?.guildId &&
+                    eventForAnnouncement.discordWinnerChannelId &&
+                    eventForAnnouncement.winners.length > 0
+                ) {
+                    await announceWinnersToDiscord({
+                        eventId,
+                        eventTitle: eventForAnnouncement.title || 'Event',
+                        guildId: eventForAnnouncement.community.guildId,
+                        channelId: eventForAnnouncement.discordWinnerChannelId,
+                        winners: eventForAnnouncement.winners.map(w => ({
+                            walletAddress: w.entry.walletAddress,
+                            discordUserId: w.entry.discordUserId || undefined,
+                        })),
+                        prize: eventForAnnouncement.prize || undefined,
+                        type: eventForAnnouncement.type,
+                        selectionMode: eventForAnnouncement.selectionMode,
+                    });
+                }
+            } catch (error) {
+                console.error('[PATCH Event] Failed to auto-announce winners on close:', error);
+                // Do not block closing if announcement fails
+            }
+        }
 
         return apiResponse(updatedEvent);
     } catch (error) {

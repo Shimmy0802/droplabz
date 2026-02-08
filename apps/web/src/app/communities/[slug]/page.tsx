@@ -108,6 +108,74 @@ export default function CommunityPage({ params }: { params: Promise<{ slug: stri
         });
     }, [params]);
 
+    // Separate effect to check membership when session loads
+    useEffect(() => {
+        console.log('[CommunityPage] Checking membership:', {
+            communityId: community?.id,
+            userId: session?.user?.id,
+            hasSession: !!session,
+            hasUser: !!session?.user,
+        });
+
+        if (community?.id && session?.user?.id) {
+            checkMembershipStatus(community.id, session.user.id);
+        } else if (community?.id && !session?.user?.id) {
+            // User is not authenticated
+            console.log('[CommunityPage] User not authenticated, resetting member state');
+            setIsMember(false);
+            setIsAdmin(false);
+        }
+    }, [community?.id, session?.user?.id]);
+
+    const checkMembershipStatus = async (communityId: string, userId: string) => {
+        try {
+            console.log('[CommunityPage] Fetching membership for:', { communityId, userId });
+            const memberRes = await fetch(`/api/communities/${communityId}/members?userId=${userId}&limit=100`);
+
+            console.log('[CommunityPage] Members API response status:', memberRes.status);
+
+            if (!memberRes.ok) {
+                console.error('[CommunityPage] Members API returned non-ok status:', memberRes.status);
+                setIsMember(false);
+                setIsAdmin(false);
+                return;
+            }
+
+            const memberData = await memberRes.json();
+            console.log('[CommunityPage] Membership response:', {
+                hasData: !!memberData.data,
+                dataLength: memberData.data?.length || 0,
+                dataType: Array.isArray(memberData.data) ? 'array' : typeof memberData.data,
+                fullResponse: JSON.stringify(memberData).substring(0, 500),
+            });
+
+            // API returns { data: [...], pagination: {...} }
+            // If data array has items, user is a member
+            if (Array.isArray(memberData.data) && memberData.data.length > 0) {
+                console.log('[CommunityPage] ✓✓✓ User IS a member! ✓✓✓');
+                setIsMember(true);
+                const userMember = memberData.data[0];
+                // Check if user is admin - use current session state
+                const isSuperAdmin = (session?.user as any)?.role === 'SUPER_ADMIN';
+                const isAdminRole = userMember.role === 'OWNER' || userMember.role === 'ADMIN' || isSuperAdmin;
+                console.log('[CommunityPage] Admin status:', {
+                    memberRole: userMember.role,
+                    isSuperAdmin,
+                    isAdminRole,
+                });
+                setIsAdmin(isAdminRole);
+            } else {
+                console.log('[CommunityPage] ✗✗✗ User is NOT a member - empty data or wrong format', memberData.data);
+                setIsMember(false);
+                setIsAdmin(false);
+            }
+        } catch (err) {
+            console.error('[CommunityPage] Error checking membership status:', err);
+            setIsMember(false);
+            setIsAdmin(false);
+        }
+    };
+
     const loadCommunityData = async (communitySlug: string) => {
         try {
             setLoading(true);
@@ -160,30 +228,7 @@ export default function CommunityPage({ params }: { params: Promise<{ slug: stri
                 setStats(prev => ({ ...prev, memberCount: 0, reviewCount: 0 }));
             }
 
-            // Check if user is admin or member of this community
-            if (session?.user?.id) {
-                const memberRes = await fetch(`/api/communities/${communityData.id}/members?userId=${session.user.id}`);
-                if (memberRes.ok) {
-                    const memberData = await memberRes.json();
-                    // API returns { data: [...], pagination: {...} }
-                    // If data array has items, user is a member
-                    if (memberData.data && memberData.data.length > 0) {
-                        setIsMember(true);
-                        const userMember = memberData.data[0];
-                        setIsAdmin(
-                            userMember.role === 'OWNER' ||
-                                userMember.role === 'ADMIN' ||
-                                session.user.role === 'SUPER_ADMIN',
-                        );
-                    } else {
-                        setIsMember(false);
-                        setIsAdmin(false);
-                    }
-                } else {
-                    setIsMember(false);
-                    setIsAdmin(false);
-                }
-            }
+            // Membership check is now done in separate useEffect
         } catch (err) {
             console.error('Error loading community:', err);
         } finally {

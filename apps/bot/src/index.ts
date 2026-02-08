@@ -298,6 +298,53 @@ app.post('/verify-server-setup', async (req: Request, res: Response) => {
 });
 
 // Start HTTP server on port 3001 (accept connections from any network interface)
+/**
+ * HTTP endpoint for announcing event winners
+ * Called by the web API to post winner announcements via the Discord bot
+ */
+app.post('/announce-winners', async (req: Request, res: Response) => {
+    try {
+        console.log('[Bot API] POST /announce-winners received');
+        const { guildId, channelId, embed } = req.body;
+
+        // Validate inputs
+        if (!guildId || !channelId || !embed) {
+            console.error('[Bot API] Missing required fields:', {
+                guildId,
+                channelId,
+                embed: !!embed,
+            });
+            return res.status(400).json({
+                error: 'Missing guildId, channelId, or embed',
+            });
+        }
+
+        console.log('[Bot API] Announcing winners to guild:', {
+            guildId,
+            channelId,
+            title: embed.title,
+        });
+
+        // Post to Discord
+        const result = await announceEvent(client, guildId, channelId, embed as AnnouncementData, {
+            content: '🎉 **Winner Announcement** 🎉',
+        });
+
+        console.log('[Bot API] Winner announcement posted successfully:', result);
+        res.json({
+            success: true,
+            messageId: result.messageId,
+            url: result.url,
+        });
+    } catch (error) {
+        console.error('[Bot API] Error posting winner announcement:', error);
+        res.status(500).json({
+            error: 'Failed to post winner announcement',
+            message: error instanceof Error ? error.message : 'Unknown error',
+        });
+    }
+});
+
 const PORT = 3001;
 const HOST = '0.0.0.0'; // Listen on all interfaces for external access
 app.listen(PORT, HOST, () => {

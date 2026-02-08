@@ -31,9 +31,14 @@ export default function AdminGiveawaysPage() {
                 method: 'DELETE',
             });
 
-            if (!response.ok) throw new Error('Failed to delete giveaway');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Failed to delete giveaway' }));
+                throw new Error(errorData.error || errorData.message || 'Failed to delete giveaway');
+            }
             setGiveaways(prev => prev.filter(g => g.id !== giveawayId));
         } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to delete giveaway';
+            alert(message);
             console.error('Failed to delete giveaway:', err);
         } finally {
             setDeleting(null);
@@ -48,10 +53,15 @@ export default function AdminGiveawaysPage() {
                 body: JSON.stringify({ status: 'CLOSED' }),
             });
 
-            if (!response.ok) throw new Error('Failed to close giveaway');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Failed to close giveaway' }));
+                throw new Error(errorData.error || errorData.message || 'Failed to close giveaway');
+            }
             const updatedGiveaway = await response.json();
             setGiveaways(prev => prev.map(g => (g.id === giveawayId ? updatedGiveaway : g)));
         } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to close giveaway';
+            alert(message);
             console.error('Failed to close giveaway:', err);
         }
     };

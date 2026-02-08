@@ -21,11 +21,13 @@ export async function GET() {
                 name: true,
                 description: true,
                 icon: true,
+                banner: true,
                 categories: true,
                 tags: true,
                 rating: true,
                 boostLevel: true,
                 isVerified: true,
+                socials: true,
                 _count: {
                     select: {
                         members: true,
