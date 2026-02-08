@@ -1,7 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/middleware';
-import { apiResponse, apiError } from '@/lib/api-utils';
+import { apiResponse, apiError, ApiError } from '@/lib/api-utils';
 import { db } from '@/lib/db';
+import { z } from 'zod';
+
+// Zod schema for community creation
+const createCommunitySchema = z.object({
+    name: z.string().min(1, 'Community name is required').max(100, 'Name too long'),
+    slug: z
+        .string()
+        .min(1, 'Slug is required')
+        .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens')
+        .max(50, 'Slug too long'),
+    types: z
+        .array(z.string())
+        .min(1, 'Select at least one community type')
+        .max(10, 'Too many types selected'),
+    description: z.string().max(500, 'Description too long').optional(),
+    discordGuildId: z.string().optional(),
+    socials: z.record(z.string()).optional(),
+    settings: z
+        .object({
+            discord: z
+                .object({
+                    announcementChannelId: z.string().optional(),
+                    giveawayChannelId: z.string().optional(),
+                    giveawayEntryChannelId: z.string().optional(),
+                    winnerChannelId: z.string().optional(),
+                    adminChannelId: z.string().optional(),
+                })
+                .optional(),
+        })
+        .optional(),
+    logo: z.string().optional(), // Base64 encoded image
+    banner: z.string().optional(), // Base64 encoded image
+});
 
 /**
  * Convert FormData to object
@@ -48,41 +81,19 @@ export async function POST(request: NextRequest) {
 
         // Parse FormData
         const formDataObject = await parseFormData(request);
-        console.log('[DEBUG] FormData object:', JSON.stringify(formDataObject, null, 2));
 
-        // Manual validation instead of Zod
-        const { name, slug, types, description, discordGuildId, socials, settings } = formDataObject;
-
-        // Validate required fields
-        if (!name || typeof name !== 'string' || name.length === 0) {
-            return NextResponse.json(
-                { error: 'VALIDATION_ERROR', message: 'Community name is required' },
-                { status: 400 },
-            );
+        // Validate with Zod schema
+        let validatedData: z.infer<typeof createCommunitySchema>;
+        try {
+            validatedData = createCommunitySchema.parse(formDataObject);
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                return apiResponse({ error: 'VALIDATION_ERROR', issues: error.issues }, 400);
+            }
+            throw error;
         }
 
-        if (!slug || typeof slug !== 'string' || slug.length === 0) {
-            return NextResponse.json({ error: 'VALIDATION_ERROR', message: 'Slug is required' }, { status: 400 });
-        }
-
-        if (!slug.match(/^[a-z0-9-]+$/)) {
-            return NextResponse.json(
-                {
-                    error: 'VALIDATION_ERROR',
-                    message: 'Slug must contain only lowercase letters, numbers, and hyphens',
-                },
-                { status: 400 },
-            );
-        }
-
-        if (!types || !Array.isArray(types) || types.length === 0) {
-            return NextResponse.json(
-                { error: 'VALIDATION_ERROR', message: 'Select at least one community type' },
-                { status: 400 },
-            );
-        }
-
-        console.log('[DEBUG] Validation passed');
+        const { name, slug, types, description, discordGuildId, socials, settings } = validatedData;
 
         // Check if slug already exists
         const existing = await db.community.findUnique({
@@ -142,12 +153,23 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        return NextResponse.json(community, { status: 201 });
+        return apiResponse(community, 201);
     } catch (error) {
-        console.error('[API Error] POST /api/communities:', error);
-        return NextResponse.json(
-            { error: 'INTERNAL_ERROR', message: error instanceof Error ? error.message : 'Internal server error' },
-            { status: 500 },
+        if (error instanceof ApiError) {
+            return apiResponse({ error: error.code, message: error.message }, error.statusCode);
+        }
+
+        if (error instanceof z.ZodError) {
+            return apiResponse({ error: 'VALIDATION_ERROR', issues: error.issues }, 400);
+        }
+
+        // General error
+        return apiResponse(
+            {
+                error: 'INTERNAL_SERVER_ERROR',
+                message: error instanceof Error ? error.message : 'Internal server error',
+            },
+            500,
         );
     }
 }
