@@ -15,6 +15,7 @@ interface EventManagementProps {
 interface Event {
     id: string;
     title: string;
+    description?: string;
     type: string;
     status: string;
     selectionMode: string;

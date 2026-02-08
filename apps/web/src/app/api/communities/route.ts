@@ -18,7 +18,7 @@ const createCommunitySchema = z.object({
         .max(10, 'Too many types selected'),
     description: z.string().max(500, 'Description too long').optional(),
     discordGuildId: z.string().optional(),
-    socials: z.record(z.string()).optional(),
+    socials: z.record(z.string(), z.string()).optional(),
     settings: z
         .object({
             discord: z
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         // Validate with Zod schema
         let validatedData: z.infer<typeof createCommunitySchema>;
         try {
-            validatedData = createCommunitySchema.parse(formDataObject);
+            validatedData = createCommunitySchema.parse(formDataObject as unknown);
         } catch (error) {
             if (error instanceof z.ZodError) {
                 return apiResponse({ error: 'VALIDATION_ERROR', issues: error.issues }, 400);
@@ -127,8 +127,8 @@ export async function POST(request: NextRequest) {
                 icon: formDataObject.logo || undefined,
                 banner: formDataObject.banner || undefined,
                 categories: types,
-                socials: socials || {},
-                solanaConfig: settings || {},
+                socials: (socials || {}) as any,
+                solanaConfig: (settings || {}) as any,
                 isVerified: false,
                 verificationStatus: 'PENDING',
                 verificationRequestedAt: new Date(),

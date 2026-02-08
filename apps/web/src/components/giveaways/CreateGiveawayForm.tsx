@@ -29,7 +29,6 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
     const [error, setError] = useState<string | null>(null);
     const [requirements, setRequirements] = useState<Requirement[]>([]);
     const [discordRoles, setDiscordRoles] = useState<DiscordRole[]>([]);
-    const [loadingRoles, setLoadingRoles] = useState(false);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -66,7 +65,6 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
     const fetchDiscordRoles = async () => {
         if (!guildId) return;
 
-        setLoadingRoles(true);
         try {
             const response = await fetch(`/api/discord/roles?guildId=${guildId}`);
             if (!response.ok) {
@@ -77,8 +75,6 @@ export function CreateGiveawayForm({ communityId, slug, guildId, onSuccess }: Gi
         } catch (err) {
             console.error('Error fetching Discord roles:', err);
             setError('Failed to load Discord roles. Role ID must be entered manually.');
-        } finally {
-            setLoadingRoles(false);
         }
     };
 

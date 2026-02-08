@@ -214,13 +214,17 @@ export async function verifyAndUpdateEntry(
     discordUserId: string | null | undefined,
     requirements: Requirement[],
 ) {
-    // Get community guild ID from event
+    // Fetch entry with community in a single query (avoid N+1)
     const entry = await db.entry.findUnique({
         where: { id: entryId },
         include: {
             event: {
-                select: {
-                    communityId: true,
+                include: {
+                    community: {
+                        select: {
+                            guildId: true,
+                        },
+                    },
                 },
             },
         },
@@ -230,12 +234,7 @@ export async function verifyAndUpdateEntry(
         throw new Error('Entry not found');
     }
 
-    const community = await db.community.findUnique({
-        where: { id: entry.event.communityId },
-        select: { guildId: true },
-    });
-
-    const guildId = community?.guildId;
+    const guildId = entry.event.community?.guildId;
 
     // Verify entry (convert null to undefined)
     const result = await verifyEntry(walletAddress, discordUserId || undefined, guildId || undefined, requirements);

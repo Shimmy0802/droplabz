@@ -1,7 +1,6 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { Users, UserPlus, Shield, Crown, Star } from 'lucide-react';
 import { AdminLoadingState } from '@/components/admin/AdminLoadingState';
 import { EventListPageShell } from '@/components/admin/EventListPageShell';

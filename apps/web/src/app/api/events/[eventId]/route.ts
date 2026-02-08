@@ -204,6 +204,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                         community: {
                             select: {
                                 guildId: true,
+                                discordWinnerChannelId: true,
                             },
                         },
                         winners: {
@@ -224,14 +225,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                 if (
                     eventForAnnouncement?.autoAnnounceWinners &&
                     eventForAnnouncement.community?.guildId &&
-                    eventForAnnouncement.discordWinnerChannelId &&
+                    eventForAnnouncement.community?.discordWinnerChannelId &&
                     eventForAnnouncement.winners.length > 0
                 ) {
                     await announceWinnersToDiscord({
                         eventId,
                         eventTitle: eventForAnnouncement.title || 'Event',
                         guildId: eventForAnnouncement.community.guildId,
-                        channelId: eventForAnnouncement.discordWinnerChannelId,
+                        channelId: eventForAnnouncement.community.discordWinnerChannelId,
                         winners: eventForAnnouncement.winners.map(w => ({
                             walletAddress: w.entry.walletAddress,
                             discordUserId: w.entry.discordUserId || undefined,

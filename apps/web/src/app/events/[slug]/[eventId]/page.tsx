@@ -73,7 +73,6 @@ export default function EventDetailPage() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [requirementsMet, setRequirementsMet] = useState<Record<string, boolean>>({});
-    const [discordUserId, setDiscordUserId] = useState<string | null>(null);
     const [isDiscordLinked, setIsDiscordLinked] = useState(false);
 
     // Fetch event data
@@ -97,10 +96,10 @@ export default function EventDetailPage() {
         fetchEvent();
     }, [eventId]);
 
-    // Auto-populate Discord ID from session if user logged in via Discord
+
+    // Auto-populate Discord link from session if user logged in via Discord
     useEffect(() => {
         if (session && session.discordId) {
-            setDiscordUserId(session.discordId);
             setIsDiscordLinked(true);
         }
     }, [session]);

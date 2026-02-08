@@ -340,15 +340,15 @@ export function GiveawayEntryPage({ eventId }: GiveawayEntryPageProps) {
                         } else {
                             // Legacy: roleNames is an object keyed by roleId
                             displayRoleNames = requiredRoleIds.map(
-                                id => req.config.roleNames[id] || roleNames[id] || id,
+                                (id: string) => req.config.roleNames[id] || roleNames[id] || id,
                             );
                         }
                     } else {
-                        displayRoleNames = requiredRoleIds.map(id => roleNames[id] || 'Role');
+                        displayRoleNames = requiredRoleIds.map((id: string) => roleNames[id] || 'Role');
                     }
 
                     // Check if user has ANY of the required roles
-                    const hasRequiredRole = requiredRoleIds.some(roleId => userRoles.includes(roleId));
+                    const hasRequiredRole = requiredRoleIds.some((roleId: string) => userRoles.includes(roleId));
                     status.isMet = isDiscordLinked && hasRequiredRole;
 
                     // Debug logging

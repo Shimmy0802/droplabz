@@ -328,7 +328,7 @@ async function postAnnouncementToBot(event: any): Promise<{ messageId: string; u
 
         // Add role mentions to the message content (Discord format: <@&ROLE_ID>)
         if (mentionRoleIds.length > 0) {
-            const roleMentions = mentionRoleIds.map(roleId => `<@&${roleId}>`).join(' ');
+            const roleMentions = mentionRoleIds.map((roleId: string) => `<@&${roleId}>`).join(' ');
             content = `${roleMentions}\n${content}`;
         }
 
@@ -337,6 +337,9 @@ async function postAnnouncementToBot(event: any): Promise<{ messageId: string; u
             mentionRoleIds,
             isCustom: !!event.customAnnouncementLine,
         });
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(botUrl, {
             method: 'POST',
@@ -350,8 +353,10 @@ async function postAnnouncementToBot(event: any): Promise<{ messageId: string; u
                 content,
                 mentionRoleIds,
             }),
-            timeout: 10000, // 10 second timeout
+            signal: controller.signal,
         });
+
+        clearTimeout(timeout);
 
         console.log(`[announce] Bot API response status: ${response.status}`);
 

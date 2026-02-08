@@ -440,7 +440,6 @@ export function buildProfessionalEventEmbed(
         footer: {
             text: `✨ DropLabz • Managed event • ${event.id.slice(0, 8)}`,
         },
-        timestamp: true,
     };
 
     return embed;
@@ -508,7 +507,6 @@ export function buildPresaleEventEmbed(
         footer: {
             text: '✨ DropLabz Presales',
         },
-        timestamp: true,
     };
 
     return embed;
@@ -585,7 +583,6 @@ export function buildCollaborationEventEmbed(
         footer: {
             text: '✨ DropLabz Collaborations',
         },
-        timestamp: true,
     };
 
     return embed;
@@ -662,7 +659,6 @@ export function buildWinnerAnnouncementEmbed(eventData: {
         footer: {
             text: '✨ DropLabz Winner Announcement',
         },
-        timestamp: true,
     };
 
     return embed;

@@ -21,7 +21,6 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
     const [error, setError] = useState<string | null>(null);
     const [requirements, setRequirements] = useState<Requirement[]>([]);
     const [discordRoles, setDiscordRoles] = useState<Array<{ id: string; name: string; managed?: boolean }>>([]);
-    const [loadingRoles, setLoadingRoles] = useState(false);
 
     // Helper to convert UTC date to local date/time for display
     const getLocalDateTimeString = (isoString: string): { date: string; time: string } => {
@@ -89,7 +88,6 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
     }, [event?.community?.guildId]);
 
     const fetchDiscordRoles = async (guildId: string) => {
-        setLoadingRoles(true);
         try {
             const response = await fetch(`/api/discord/roles?guildId=${guildId}`);
             if (!response.ok) {
@@ -100,8 +98,6 @@ export function EditGiveawayForm({ event, slug }: EditGiveawayFormProps) {
         } catch (err) {
             console.error('Error fetching Discord roles:', err);
             setError('Failed to load Discord roles. Role ID must be entered manually.');
-        } finally {
-            setLoadingRoles(false);
         }
     };
 

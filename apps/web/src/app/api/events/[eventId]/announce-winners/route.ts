@@ -22,7 +22,7 @@ const announceSchema = z.object({
 export async function POST(req: NextRequest, { params }: { params: { eventId: string } }) {
     try {
         // Authenticate user
-        const user = await requireAuth();
+        await requireAuth();
 
         // Parse and validate request
         const body = await req.json();

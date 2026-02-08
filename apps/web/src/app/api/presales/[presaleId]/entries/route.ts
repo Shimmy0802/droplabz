@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireCommunityAdmin } from '@/lib/auth/middleware';
 import { ApiError } from '@/lib/api-utils';
-import { validateSolanaAddress } from '@/lib/solana/verification';
 import { verifyDiscordRequirements, verifySolanaRequirements } from '@/lib/verification/entry-verifier';
 import { z } from 'zod';
 
@@ -76,7 +75,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pre
             // Verify tier requirements
             const discordResult = await verifyDiscordRequirements(
                 discordUserId,
-                presale.community?.guildId,
+                presale.community?.guildId ?? undefined,
                 tier.requirements,
             );
 

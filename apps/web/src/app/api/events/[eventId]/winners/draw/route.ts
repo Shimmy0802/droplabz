@@ -40,6 +40,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                 community: {
                     select: {
                         guildId: true,
+                        discordWinnerChannelId: true,
                     },
                 },
             },
@@ -140,14 +141,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         if (
             eventForAnnouncement?.autoAnnounceWinners &&
             eventForAnnouncement.community?.guildId &&
-            eventForAnnouncement.discordWinnerChannelId
+            eventForAnnouncement.community?.discordWinnerChannelId
         ) {
             try {
                 await announceWinnersToDiscord({
                     eventId,
                     eventTitle: eventForAnnouncement.title || 'Event',
                     guildId: eventForAnnouncement.community.guildId,
-                    channelId: eventForAnnouncement.discordWinnerChannelId,
+                    channelId: eventForAnnouncement.community.discordWinnerChannelId,
                     winners: createdWinners.map(w => ({
                         walletAddress: w.entry.walletAddress,
                         discordUserId: w.entry.discordUserId || undefined,

@@ -98,13 +98,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         });
 
         // Auto-announce winners to Discord if enabled
-        if (event.autoAnnounceWinners && event.community?.guildId && event.discordWinnerChannelId) {
+        if (event.autoAnnounceWinners && event.community?.guildId && event.community?.discordWinnerChannelId) {
             try {
                 await announceWinnersToDiscord({
                     eventId,
                     eventTitle: event.title || 'Event',
                     guildId: event.community.guildId,
-                    channelId: event.discordWinnerChannelId,
+                    channelId: event.community.discordWinnerChannelId,
                     winners: createdWinners.map(w => ({
                         walletAddress: w.entry.walletAddress,
                         discordUserId: w.entry.discordUserId || undefined,

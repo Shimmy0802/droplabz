@@ -68,7 +68,6 @@ export function CommunityHeader({
     community,
     memberCount,
     reviewCount,
-    isAdmin,
     isMember,
     isAuthenticated,
     onJoinSuccess,
