@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export class ApiError extends Error {
     constructor(
@@ -30,4 +31,27 @@ export function apiError(error: unknown) {
     }
 
     return NextResponse.json({ error: 'UNKNOWN_ERROR', message: 'An unknown error occurred' }, { status: 500 });
+}
+
+/**
+ * Validate a CUID parameter from route params
+ * Throws ApiError if invalid
+ */
+export function validateCuid(value: unknown, paramName: string): string {
+    try {
+        return z.string().cuid().parse(value);
+    } catch (error) {
+        throw new ApiError('INVALID_ID', 400, `Invalid ${paramName}: must be a valid CUID`);
+    }
+}
+
+/**
+ * Validate multiple CUID parameters at once
+ */
+export function validateCuids(params: Record<string, unknown>, names: string[]): Record<string, string> {
+    const validated: Record<string, string> = {};
+    for (const name of names) {
+        validated[name] = validateCuid(params[name], name);
+    }
+    return validated;
 }

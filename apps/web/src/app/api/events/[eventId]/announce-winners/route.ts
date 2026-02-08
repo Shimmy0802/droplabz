@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireCommunityAdmin } from '@/lib/auth/middleware';
 import { db } from '@/lib/db';
 import { buildWinnerAnnouncementEmbed } from '@/lib/utils/event-embed-helpers';
+import { validateCuid } from '@/lib/api-utils';
 import { z } from 'zod';
 
 const announceSchema = z.object({
@@ -23,6 +24,8 @@ export async function POST(req: NextRequest, { params }: { params: { eventId: st
     try {
         // Authenticate user
         await requireAuth();
+        
+        const validatedEventId = validateCuid(params.eventId, 'eventId');
 
         // Parse and validate request
         const body = await req.json();
@@ -30,7 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: { eventId: st
 
         // Fetch event
         const event = await db.event.findUnique({
-            where: { id: params.eventId },
+            where: { id: validatedEventId },
             include: {
                 community: {
                     select: { id: true, guildId: true },

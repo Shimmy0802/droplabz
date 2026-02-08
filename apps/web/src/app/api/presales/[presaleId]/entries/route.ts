@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireCommunityAdmin } from '@/lib/auth/middleware';
 import { ApiError } from '@/lib/api-utils';
-import { verifyDiscordRequirements, verifySolanaRequirements } from '@/lib/verification/entry-verifier';
-import { z } from 'zod';
+import { verifyDiscordRequirements, verifySolanaRequirements } from '@/lib/verification/entry-verifier';import { validateCuid } from '@/lib/api-utils';import { z } from 'zod';
 
 const createPresaleEntrySchema = z.object({
     presaleId: z.string().cuid(),
@@ -18,6 +17,7 @@ const createPresaleEntrySchema = z.object({
 export async function POST(req: NextRequest, { params }: { params: Promise<{ presaleId: string }> }) {
     try {
         const { presaleId } = await params;
+        const validatedPresaleId = validateCuid(presaleId, 'presaleId');
         const body = await req.json();
         const { walletAddress, discordUserId } = createPresaleEntrySchema
             .pick({
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pre
 
         // Get presale with tiers and community info
         const presale = await db.presale.findUnique({
-            where: { id: presaleId },
+            where: { id: validatedPresaleId },
             include: {
                 tiers: {
                     include: {
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pre
         const existingEntry = await db.entry.findFirst({
             where: {
                 walletAddress,
-                eventId: presaleId,
+                eventId: validatedPresaleId,
             },
         });
 
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pre
         // Create entry with tier metadata
         const entry = await db.entry.create({
             data: {
-                eventId: presaleId,
+                eventId: validatedPresaleId,
                 walletAddress,
                 discordUserId,
                 status: 'VALID',
@@ -156,10 +156,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pre
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ presaleId: string }> }) {
     try {
         const { presaleId } = await params;
+        const validatedPresaleId = validateCuid(presaleId, 'presaleId');
 
         // Get presale and verify community access
         const presale = await db.presale.findUnique({
-            where: { id: presaleId },
+            where: { id: validatedPresaleId },
         });
 
         if (!presale) {
@@ -171,7 +172,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ pre
 
         // Get all entries with tier info
         const entries = await db.entry.findMany({
-            where: { eventId: presaleId },
+            where: { eventId: validatedPresaleId },
             select: {
                 id: true,
                 walletAddress: true,

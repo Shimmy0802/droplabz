@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/middleware';
 import { db } from '@/lib/db';
+import { validateCuid } from '@/lib/api-utils';
 
 /**
  * POST /api/communities/[communityId]/join
@@ -10,10 +11,11 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ co
     try {
         const user = await requireAuth();
         const { communityId } = await params;
+        const validatedCommunityId = validateCuid(communityId, 'communityId');
 
         // Get community by ID
         const community = await db.community.findUnique({
-            where: { id: communityId },
+            where: { id: validatedCommunityId },
             select: {
                 id: true,
                 name: true,

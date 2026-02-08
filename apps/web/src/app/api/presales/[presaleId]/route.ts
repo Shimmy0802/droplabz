@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireCommunityAdmin } from '@/lib/auth/middleware';
 import { db } from '@/lib/db';
+import { validateCuid } from '@/lib/api-utils';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ presaleId: string }> }) {
     try {
         const { presaleId } = await params;
+        const validatedPresaleId = validateCuid(presaleId, 'presaleId');
 
         const presale = await db.presale.findUnique({
-            where: { id: presaleId },
+            where: { id: validatedPresaleId },
             include: {
                 tiers: {
                     select: {

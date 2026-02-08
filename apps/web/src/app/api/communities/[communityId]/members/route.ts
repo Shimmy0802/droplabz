@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { validateCuid } from '@/lib/api-utils';
 
 const querySchema = z.object({
     limit: z.string().nullish().default('20').transform(Number),
@@ -24,8 +25,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
         // Public endpoint - allows anyone to view members
         // If userId is provided, returns specific member info
         const { communityId } = await params;
+        const validatedCommunityId = validateCuid(communityId, 'communityId');
 
-        if (!communityId) {
+        if (!validatedCommunityId) {
             console.error('[Members] Missing communityId parameter');
             return NextResponse.json({ error: 'Missing communityId' }, { status: 400 });
         }
@@ -51,7 +53,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
 
         // Build where clause
         const where: any = {
-            communityId,
+            communityId: validatedCommunityId,
         };
 
         if (userId) {
@@ -79,7 +81,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
         }
 
         console.log('[Members] Query params:', {
-            communityId,
+            communityId: validatedCommunityId,
             limit,
             offset: actualOffset,
             hasSearch: !!search,

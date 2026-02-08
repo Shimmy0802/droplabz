@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, requireCommunityAdmin } from '@/lib/auth/middleware';
 import { db } from '@/lib/db';
-import { ApiError } from '@/lib/api-utils';
+import { ApiError, validateCuid } from '@/lib/api-utils';
 import { z } from 'zod';
 
 // Validate Solana public key format (base58, ~44 chars)
@@ -56,9 +56,10 @@ const updateCommunitySchema = z.object({
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ communityId: string }> }) {
     try {
         const { communityId } = await params;
+        const validatedCommunityId = validateCuid(communityId, 'communityId');
 
         const community = await db.community.findUnique({
-            where: { id: communityId },
+            where: { id: validatedCommunityId },
             include: {
                 subscription: true,
                 _count: {
@@ -96,10 +97,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ communityId: string }> }) {
     try {
         const { communityId } = await params;
+        const validatedCommunityId = validateCuid(communityId, 'communityId');
         const user = await getCurrentUser();
 
         // Verify user is admin of this community
-        await requireCommunityAdmin(communityId);
+        await requireCommunityAdmin(validatedCommunityId);
 
         const body = await request.json();
         console.log('[PATCH Community] Request body:', JSON.stringify(body, null, 2));
@@ -114,7 +116,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         // Get current community to check old slug
         const currentCommunity = await db.community.findUnique({
-            where: { id: communityId },
+            where: { id: validatedCommunityId },
             select: { slug: true, name: true },
         });
 
@@ -176,7 +178,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         // Update community
         const updatedCommunity = await db.community.update({
-            where: { id: communityId },
+            where: { id: validatedCommunityId },
             data: updateData,
             include: {
                 subscription: true,
@@ -186,7 +188,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         // Log the action
         await db.auditLog.create({
             data: {
-                communityId,
+                communityId: validatedCommunityId,
                 actorId: user.id,
                 action: 'UPDATE_COMMUNITY',
                 meta: {

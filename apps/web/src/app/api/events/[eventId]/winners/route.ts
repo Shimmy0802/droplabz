@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { apiResponse, apiError, ApiError } from '@/lib/api-utils';
+import { apiResponse, apiError, ApiError, validateCuid } from '@/lib/api-utils';
 import { requireCommunityAdmin } from '@/lib/auth/middleware';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
@@ -12,12 +12,13 @@ const pickWinnersSchema = z.object({
 export async function POST(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
     try {
         const { eventId } = await params;
+        const validatedEventId = validateCuid(eventId, 'eventId');
         const body = await request.json();
         const { entryIds } = pickWinnersSchema.parse(body);
 
         // Get event with community info
         const event = await db.event.findUnique({
-            where: { id: eventId },
+            where: { id: validatedEventId },
             include: {
                 community: true,
             },
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         const entries = await db.entry.findMany({
             where: {
                 id: { in: entryIds },
-                eventId,
+                eventId: validatedEventId,
             },
         });
 
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
         // Check if event has enough winner slots (accounting for reserved spots)
         const existingWinners = await db.winner.count({
-            where: { eventId },
+            where: { eventId: validatedEventId },
         });
 
         const availableSpots = event.maxWinners - (event.reservedSpots || 0) - existingWinners;
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         // Create winners
         const winners = await db.winner.createMany({
             data: entryIds.map(entryId => ({
-                eventId,
+                eventId: validatedEventId,
                 entryId,
                 pickedBy: user.id,
             })),
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         // Get created winners with entry details
         const createdWinners = await db.winner.findMany({
             where: {
-                eventId,
+                eventId: validatedEventId,
                 entryId: { in: entryIds },
             },
             include: {
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         if (event.autoAnnounceWinners && event.community?.guildId && event.community?.discordWinnerChannelId) {
             try {
                 await announceWinnersToDiscord({
-                    eventId,
+                    eventId: validatedEventId,
                     eventTitle: event.title || 'Event',
                     guildId: event.community.guildId,
                     channelId: event.community.discordWinnerChannelId,
@@ -128,10 +129,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
     try {
         const { eventId } = await params;
+        const validatedEventId = validateCuid(eventId, 'eventId');
 
         // Get event with community info
         const event = await db.event.findUnique({
-            where: { id: eventId },
+            where: { id: validatedEventId },
             select: {
                 id: true,
                 communityId: true,

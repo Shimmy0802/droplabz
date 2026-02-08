@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { apiResponse, apiError, ApiError } from '@/lib/api-utils';
+import { apiResponse, apiError, ApiError, validateCuid } from '@/lib/api-utils';
 import { requireCommunityMember, requireCommunityAdmin } from '@/lib/auth/middleware';
 import { resolveMissingRoleNames } from '@/lib/discord/role-resolver';
 import { announceWinnersToDiscord } from '@/lib/discord/announce-winners';
@@ -24,6 +24,7 @@ const updateEventSchema = z.object({
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
     try {
         const { eventId } = await params;
+        const validatedEventId = validateCuid(eventId, 'eventId');
         const { searchParams } = new URL(_request.url);
         const limit = parseInt(searchParams.get('limit') || '50');
         const offset = parseInt(searchParams.get('offset') || '0');
@@ -31,7 +32,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
         // Fetch event with entries
         const event = await db.event.findUnique({
-            where: { id: eventId },
+            where: { id: validatedEventId },
             include: {
                 community: {
                     select: {
@@ -94,11 +95,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         let stats = null;
         if (includeStats) {
             const [totalEntries, validEntries, invalidEntries, ineligibleEntries, totalWinners] = await Promise.all([
-                db.entry.count({ where: { eventId } }),
-                db.entry.count({ where: { eventId, status: 'VALID', isIneligible: false } }),
-                db.entry.count({ where: { eventId, status: 'INVALID' } }),
-                db.entry.count({ where: { eventId, isIneligible: true } }),
-                db.winner.count({ where: { eventId } }),
+                db.entry.count({ where: { eventId: validatedEventId } }),
+                db.entry.count({ where: { eventId: validatedEventId, status: 'VALID', isIneligible: false } }),
+                db.entry.count({ where: { eventId: validatedEventId, status: 'INVALID' } }),
+                db.entry.count({ where: { eventId: validatedEventId, isIneligible: true } }),
+                db.winner.count({ where: { eventId: validatedEventId } }),
             ]);
 
             stats = {
@@ -131,16 +132,17 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
     try {
         const { eventId } = await params;
+        const validatedEventId = validateCuid(eventId, 'eventId');
         const body = await request.json();
 
-        console.log('[PATCH Event] Received update request:', { eventId, body });
+        console.log('[PATCH Event] Received update request:', { eventId: validatedEventId, body });
 
         const updates = updateEventSchema.parse(body);
         console.log('[PATCH Event] Validated updates:', updates);
 
         // Get event with community info
         const event = await db.event.findUnique({
-            where: { id: eventId },
+            where: { id: validatedEventId },
             select: {
                 id: true,
                 communityId: true,
@@ -199,7 +201,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         if (isClosingEvent) {
             try {
                 const eventForAnnouncement = await db.event.findUnique({
-                    where: { id: eventId },
+                    where: { id: validatedEventId },
                     include: {
                         community: {
                             select: {
@@ -229,7 +231,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                     eventForAnnouncement.winners.length > 0
                 ) {
                     await announceWinnersToDiscord({
-                        eventId,
+                        eventId: validatedEventId,
                         eventTitle: eventForAnnouncement.title || 'Event',
                         guildId: eventForAnnouncement.community.guildId,
                         channelId: eventForAnnouncement.community.discordWinnerChannelId,
