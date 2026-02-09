@@ -96,6 +96,7 @@ model UserWallet {
   @@unique([userId, walletAddress])
   @@index([userId])
   @@index([walletAddress])
+  @@index([userId, isPrimary]) // For finding primary wallet for user
 }
 
 model Community {
@@ -180,6 +181,8 @@ model CommunityMember {
   @@index([userId])
   @@index([isWhitelisted])
   @@index([isBlacklisted])
+  @@index([communityId, role]) // For role-based lookups within community
+  @@index([createdAt]) // For listing members by join time
 }
 
 model Subscription {
@@ -249,6 +252,9 @@ model Event {
 
   @@index([communityId])
   @@index([status])
+  @@index([communityId, status]) // For listing events by community and status
+  @@index([endAt]) // For sorting upcoming events
+  @@index([createdAt]) // For sorting by creation time
 }
 
 model Requirement {
@@ -286,6 +292,8 @@ model Entry {
   @@index([eventId])
   @@index([walletAddress])
   @@index([status])
+  @@index([eventId, status]) // For filtering entries by status within event
+  @@index([createdAt]) // For ordering by creation time
 }
 
 model Winner {
@@ -301,6 +309,7 @@ model Winner {
 
   @@index([eventId])
   @@index([entryId])
+  @@index([pickedAt]) // For ordering winners by selection time
 }
 
 model Presale {
@@ -317,6 +326,8 @@ model Presale {
 
   @@index([communityId])
   @@index([status])
+  @@index([communityId, status]) // For listing presales by community and status
+  @@index([createdAt]) // For sorting by creation time
 }
 
 model PresaleTier {
