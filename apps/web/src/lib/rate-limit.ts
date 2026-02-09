@@ -91,10 +91,12 @@ class RateLimiter {
 
     /**
      * Remove old entries to prevent memory leak
+     * Called automatically every minute
      */
     private cleanup(): void {
         const now = Date.now();
         const keysToDelete: string[] = [];
+        let deletedCount = 0;
 
         for (const [key, entry] of this.store.entries()) {
             if (now > entry.resetAt) {
@@ -102,7 +104,13 @@ class RateLimiter {
             }
         }
 
+        deletedCount = keysToDelete.length;
         keysToDelete.forEach(key => this.store.delete(key));
+
+        // Log cleanup in development mode
+        if (process.env.NODE_ENV === 'development' && deletedCount > 0) {
+            console.debug(`[RateLimiter] Cleaned up ${deletedCount} expired entries`);
+        }
     }
 
     /**

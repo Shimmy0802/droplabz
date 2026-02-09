@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+/**
+ * Environment check for error message security
+ * Production (NODE_ENV === 'production'): Returns generic safe messages
+ * Development: Returns full details for debugging
+ */
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**

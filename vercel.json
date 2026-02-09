@@ -3,9 +3,41 @@
     "devCommand": "cd apps/web && pnpm dev",
     "installCommand": "corepack enable && pnpm install --no-frozen-lockfile",
     "outputDirectory": "apps/web/.next",
+    "regions": ["iad1"],
     "env": {
         "PNPM_HOME": "/root/.pnpm",
         "NODE_OPTIONS": "--max-old-space-size=4096",
-        "PRISMA_SCHEMA_ENGINE": "apps/web/prisma/schema.prisma"
-    }
+        "PRISMA_SCHEMA_ENGINE": "apps/web/prisma/schema.prisma",
+        "NODE_ENV": "production"
+    },
+    "functions": {
+        "apps/web/.next/server/pages/api/**/*.js": {
+            "memory": 1024,
+            "maxDuration": 10
+        }
+    },
+    "headers": [
+        {
+            "source": "/api/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "no-cache, no-store, must-revalidate"
+                },
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                },
+                {
+                    "key": "X-Frame-Options",
+                    "value": "DENY"
+                },
+                {
+                    "key": "X-XSS-Protection",
+                    "value": "1; mode=block"
+                }
+            ]
+        }
+    ],
+    "redirects": []
 }
