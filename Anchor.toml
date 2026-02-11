@@ -11,6 +11,10 @@ anchor-lang = "0.29.0"
 anchor-spl = "0.29.0"
 solana-program = "1.17.0"
 
+[provider]
+cluster = "testnet"
+wallet = "~/.config/solana/test-wallet.json"
+
 [lib]
 crate-type = ["cdylib"]
 

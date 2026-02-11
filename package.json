@@ -16,7 +16,8 @@
         "format:check": "prettier --check .",
         "db:push": "cd apps/web && pnpm db:push",
         "db:studio": "cd apps/web && pnpm db:studio",
-        "db:migrate": "cd apps/web && pnpm db:migrate"
+        "db:migrate": "cd apps/web && pnpm db:migrate",
+        "test:security": "pnpm --filter @droplabz/web test:security"
     },
     "prettier": "@solana/prettier-config-solana",
     "devDependencies": {
